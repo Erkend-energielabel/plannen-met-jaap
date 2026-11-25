@@ -27,7 +27,7 @@
   window.claude={use:function(n){ if(n==='downloads')return Promise.resolve(dl); if(n==='db')return dbReady; if(n==='user')return userReady; return Promise.resolve(null); }};
   function ui(f){ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',f); else f(); }
   function fout(t){ ui(function(){ var e=document.getElementById('lgErr'); if(e){ e.textContent=t; e.hidden=!t; } }); }
-  function toon(on){ ui(function(){ var l=document.getElementById('login'); if(l) l.hidden=!on; document.documentElement.classList.toggle('uitgelogd',on); var b=document.getElementById('btnUit'); if(b) b.hidden=on; }); }
+  function toon(on){ ui(function(){ var l=document.getElementById('login'); if(l) l.hidden=!on; document.documentElement.classList.toggle('uitgelogd',on); var b=document.getElementById('btnUit'); if(b) b.hidden=on; var bp=document.getElementById('btnPw'); if(bp) bp.hidden=on; }); }
   function wDoc(ref){ return {
     get:function(){ return ref.get(); },
     set:function(v){ return ref.set(v); },
@@ -88,6 +88,18 @@
         :c==='auth/network-request-failed'?'Geen verbinding. Aanmaken kan alleen online.'
         :'Aanmaken mislukt ('+(c||'onbekend')+').'};
     });
+  };
+  window.csZetWachtwoord=function(pw){
+    var u=auth.currentUser; if(!u) return Promise.resolve({ok:false,fout:'Je bent niet ingelogd.'});
+    pw=String(pw||''); if(pw.length<6) return Promise.resolve({ok:false,fout:'Het wachtwoord moet minstens 6 tekens zijn.'});
+    var heeft=(u.providerData||[]).some(function(x){return x&&x.providerId==='password';});
+    var p=heeft?u.updatePassword(pw):u.linkWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,pw));
+    return p.then(function(){ return {ok:true,mail:u.email}; },function(e){ var c=e&&e.code;
+      return {ok:false,fout:c==='auth/requires-recent-login'?'Log even opnieuw in en probeer het direct daarna nog eens.'
+        :c==='auth/weak-password'?'Het wachtwoord moet minstens 6 tekens zijn.'
+        :c==='auth/provider-already-linked'?'Er staat al een wachtwoord op dit account.'
+        :c==='auth/email-already-in-use'||c==='auth/credential-already-in-use'?'Dit e-mailadres heeft al een ander account met wachtwoord.'
+        :'Instellen mislukt ('+(c||'onbekend')+').'}; });
   };
   window.csWachtwoordMail=function(mail){ return auth.sendPasswordResetEmail(String(mail).trim()).then(function(){ return {ok:true}; },function(e){ return {ok:false,fout:'Versturen mislukt ('+((e&&e.code)||'onbekend')+').'}; }); };
   if(MS.tenant){
@@ -408,6 +420,20 @@ th{background:#EB6608}
 </style>
 </head>
 <body>
+<div class="login" id="pwDlg" hidden style="background:rgba(29,29,27,.55)">
+  <form class="lg-card" id="pwForm" autocomplete="off">
+    <div class="lg-sub">Bouwen is mensenwerk</div>
+    <h2>Wachtwoord instellen</h2>
+    <p class="lg-intro">Hiermee kun je op elk apparaat ook inloggen met je e-mailadres en dit wachtwoord, bijvoorbeeld op de iPad.</p>
+    <label for="pwNew">Nieuw wachtwoord</label>
+    <input id="pwNew" type="password" autocomplete="new-password" placeholder="minimaal 6 tekens">
+    <label for="pwNew2" style="margin-top:10px">Nog een keer</label>
+    <input id="pwNew2" type="password" autocomplete="new-password" placeholder="herhaal het wachtwoord">
+    <p class="lg-err" id="pwErr" hidden></p>
+    <button class="lg-btn lg-go" type="submit" id="pwOk">Opslaan</button>
+    <button class="lg-btn lg-ms" type="button" id="pwCancel">Annuleren</button>
+  </form>
+</div>
 <div class="login" id="login">
   <form class="lg-card" id="lgForm" autocomplete="off">
     <div class="lg-sub">Bouwen is mensenwerk</div>
@@ -421,7 +447,7 @@ th{background:#EB6608}
     <p class="lg-err" id="lgErr" hidden></p>
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note">Geen inlog? Vraag de beheerder om een account.</p>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 19:39</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 19:44</p>
   </form>
 </div>
 <style>
@@ -442,6 +468,21 @@ th{background:#EB6608}
 html.uitgelogd body{overflow:hidden}
 </style>
 <script>
+(function(){ var pf=document.getElementById('pwForm'), pd=document.getElementById('pwDlg'), pe=document.getElementById('pwErr');
+  function pfout(t,ok){ pe.textContent=t; pe.hidden=!t; pe.style.color=ok?'#1F7A4A':''; }
+  document.getElementById('pwCancel').addEventListener('click',function(){ pd.hidden=true; pfout(''); pf.reset(); });
+  pf.addEventListener('submit',function(e){ e.preventDefault();
+    var a=document.getElementById('pwNew').value, b=document.getElementById('pwNew2').value;
+    if(a.length<6){ pfout('Het wachtwoord moet minstens 6 tekens zijn.'); return; }
+    if(a!==b){ pfout('De twee wachtwoorden zijn niet gelijk.'); return; }
+    var k=document.getElementById('pwOk'); k.disabled=true; pfout('');
+    Promise.resolve(window.csZetWachtwoord&&window.csZetWachtwoord(a)).then(function(r){ k.disabled=false;
+      if(!r||!r.ok){ pfout((r&&r.fout)||'Instellen mislukt.'); return; }
+      pf.reset(); pfout('Opgeslagen. Je kunt nu ook inloggen met '+r.mail+' en dit wachtwoord.',true);
+      setTimeout(function(){ pd.hidden=true; pfout(''); },3500);
+    });
+  });
+})();
 (function(){ var f=document.getElementById('lgForm');
   f.addEventListener('submit',function(e){ e.preventDefault();
     var b=document.getElementById('lgBtn'); b.disabled=true; b.textContent='Bezig\u2026';
@@ -455,7 +496,7 @@ html.uitgelogd body{overflow:hidden}
     <div class="cbar-in">
       <div class="clogo" aria-label="Constructif">CONS<br>TRUCT<br>IF</div>
       <div class="ctitle"><div class="ctag">Bouwen is mensenwerk · Planning</div><h1>Plannen met Jaap</h1></div>
-      <span id="rolechip"></span><button class="cbtn" id="theme" type="button" aria-label="Licht of donker">🌙 Donker</button><button class="cbtn" id="btnUit" type="button" hidden onclick="window.csLogout&&window.csLogout()">Uitloggen</button>
+      <span id="rolechip"></span><button class="cbtn" id="theme" type="button" aria-label="Licht of donker">🌙 Donker</button><button class="cbtn" id="btnPw" type="button" hidden onclick="document.getElementById('pwDlg').hidden=false;document.getElementById('pwNew').focus()">Wachtwoord</button><button class="cbtn" id="btnUit" type="button" hidden onclick="window.csLogout&&window.csLogout()">Uitloggen</button>
     </div>
     <div class="cprog" id="cprog"></div>
   </header>
