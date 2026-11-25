@@ -16,7 +16,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js?v=202611252005"></script>
+<script src="firebase-config.js?v=202611252013"></script>
 <script>
 /* ---------- Firebase-koppeling: inloggen, database en downloads ---------- */
 (function(){
@@ -458,7 +458,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note">Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:05</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:13</p>
   </form>
 </div>
 <style>
@@ -1307,7 +1307,15 @@ function viewToegang(){
     if(m.role!=='beheerder') h+='<div class="acc-pr">'+S.projects.map(function(p){ return '<label class="chk"><input type="checkbox" data-mproj="'+esc(m.uid)+'" value="'+p.id+'"'+((m.projects||[]).indexOf(p.id)>=0?' checked':'')+'> '+esc((p.nr?p.nr+' · ':'')+p.name)+'</label>'; }).join('')+'</div>';
     h+='</div>';
   });
-  h+='</div>'+(V.accMsg?'<p class="hint" style="color:var(--good);font-weight:600">'+esc(V.accMsg)+'</p>':'')+'<div class="card"><h2>Persoon toevoegen</h2>'; V.accMsg='';
+  h+='</div>'+(V.accMsg?'<p class="hint" style="color:var(--good);font-weight:600">'+esc(V.accMsg)+'</p>':''); V.accMsg='';
+  if(V.accShare){ var sh=V.accShare;
+    h+='<div class="card share"><h2>Stuur dit naar '+esc(sh.mail)+'</h2><p class="hint">De app stuurt zelf geen mail. Kopieer dit bericht of stuur het direct door. Het wachtwoord bewaart de app nergens: sluit je dit, dan is het weg.</p>';
+    h+='<textarea id="shareTxt" rows="10" style="width:100%;font:inherit;font-size:14px" readonly>'+esc(sh.tekst)+'</textarea>';
+    h+='<p class="hint" id="shareMsg"></p><div class="acts"><button class="btn primary" type="button" data-sharecopy="1">📋 Kopiëren</button>';
+    h+='<a class="btn" href="https://wa.me/?text='+encodeURIComponent(sh.tekst)+'" target="_blank" rel="noopener">💬 WhatsApp</a>';
+    h+='<a class="btn" href="mailto:'+encodeURIComponent(sh.mail)+'?subject='+encodeURIComponent('Toegang tot Plannen met Jaap')+'&body='+encodeURIComponent(sh.tekst)+'">✉ Mail</a>';
+    h+='<span class="spacer"></span><button class="btn" type="button" data-shareclose="1">Sluiten</button></div></div>'; }
+  h+='<div class="card"><h2>Persoon toevoegen</h2>';
   h+='<ol class="steps"><li>Maak voor deze persoon een inlog aan in Firebase: <b>Authentication</b> &rarr; <b>Users</b> &rarr; <b>Add user</b>, met zijn e-mailadres en een wachtwoord.</li><li>Typ hieronder hetzelfde e-mailadres en tik op <b>+ Toevoegen</b>.</li><li>Kies links zijn rol en vink zijn projecten aan.</li></ol>';
   if(u&&typeof u.search==='function') h+='<input type="search" id="accQ" placeholder="E-mailadres, bijv. naam@bedrijf.nl" autocomplete="off"><div id="accRes" class="accres"></div>';
   else h+='<p class="hint">Inloggen is nog niet gereed. Herlaad de pagina.</p>';
@@ -1700,6 +1708,12 @@ document.addEventListener('click',function(e){
   if((el=t.closest('[data-uday]'))){ V.uDay=+el.getAttribute('data-uday'); render(); return; }
   if((el=t.closest('[data-utick]'))){ var q=el.getAttribute('data-utick').split('|'), tk=T(q[0]); if(tk&&canProj(tk.projectId)) mut(function(){ if(q[1] in tk.days) setD(tk,q[1],!isD(tk.days[q[1]])); }); return; }
   if((el=t.closest('[data-upost]'))){ var q2=el.getAttribute('data-upost').split('|'), tk2=T(q2[0]); if(tk2) openPostit(tk2.id,q2[1],runIdx(tk2,q2[1])); return; }
+  if(t.closest('[data-shareclose]')){ V.accShare=null; render(); return; }
+  if(t.closest('[data-sharecopy]')){ var ta=document.getElementById('shareTxt'), sm=document.getElementById('shareMsg'); if(!ta) return;
+    var klaar=function(){ if(sm) sm.textContent='Gekopieerd. Plak het in WhatsApp, mail of sms.'; };
+    var oud=function(){ try{ ta.removeAttribute('readonly'); ta.select(); ta.setSelectionRange(0,ta.value.length); document.execCommand('copy'); ta.setAttribute('readonly',''); klaar(); }catch(e){ if(sm) sm.textContent='Kopiëren lukt niet. Selecteer de tekst en kopieer hem zelf.'; } };
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(klaar,oud); else oud();
+    return; }
   if((el=t.closest('[data-newuser]'))){
     if(!isAdmin()||!window.csMaakGebruiker) return;
     var nm=document.getElementById('nuMail'), nw=document.getElementById('nuPw'), nmsg=document.getElementById('nuMsg');
@@ -1712,13 +1726,15 @@ document.addEventListener('click',function(e){
       el.disabled=false;
       if(!r||!r.ok){ if(nmsg) nmsg.textContent=(r&&r.fout)||'Aanmaken mislukt.'; return; }
       V.accMsg='Inlog aangemaakt voor '+mail+'. Kies hieronder zijn rol en projecten.';
+      var pr=curProj(), url=window.APP_URL||location.href.split('?')[0];
+      V.accShare={mail:mail,tekst:'Hoi,\n\nJe hebt toegang tot de planning'+(pr?' van '+(pr.nr?pr.nr+' ':'')+pr.name:'')+' in Plannen met Jaap.\n\nOpen de app: '+url+'\nE-mailadres: '+mail+'\nWachtwoord: '+pw+'\n\nLog in met je e-mailadres en wachtwoord. Daarna kun je je wachtwoord zelf wijzigen met de knop Wachtwoord bovenin.\n\nTip: zet de app op je beginscherm, dan heb je hem altijd bij de hand.'};
       mut(function(){ members().push({uid:mail,role:'uitvoerder',projects:V.pid?[V.pid]:[],discs:[],note:'',view:'alles'}); });
     },function(){ el.disabled=false; if(nmsg) nmsg.textContent='Aanmaken mislukt.'; });
     return;
   }
   if((el=t.closest('[data-addm]'))){ if(!isAdmin()) return; var nu=el.getAttribute('data-addm'); mut(function(){ members().push({uid:nu,role:'uitvoerder',projects:V.pid?[V.pid]:[]}); }); return; }
   if((el=t.closest('[data-mdel]'))){ if(!isAdmin()) return; var mu=el.getAttribute('data-mdel'); if(V.armed==='m'+mu){ V.armed=null; mut(function(){ S.access.members=members().filter(function(m){return m.uid!==mu;}); }); } else { V.armed='m'+mu; render(); setTimeout(function(){ if(V.armed==='m'+mu){ V.armed=null; render(); } },4000); } return; }
-  if((el=t.closest('[data-tab]'))){ V.tab=el.getAttribute('data-tab'); V.armed=null; V.expMsg=''; render(); return; }
+  if((el=t.closest('[data-tab]'))){ if(el.getAttribute('data-tab')!=='toegang') V.accShare=null; V.tab=el.getAttribute('data-tab'); V.armed=null; V.expMsg=''; render(); return; }
   if((el=t.closest('[data-mode]'))){ if(isUitv()&&['normal','postit'].indexOf(el.getAttribute('data-mode'))<0) return; var nm2=el.getAttribute('data-mode'); V.mode=(V.mode===nm2&&nm2!=='normal')?'normal':nm2; render(); return; }
   if(t.closest('[data-undo]')){ undo(); return; }
   if(t.closest('[data-redo]')){ redo(); return; }
