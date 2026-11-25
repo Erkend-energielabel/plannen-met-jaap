@@ -16,7 +16,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js?v=202611252019"></script>
+<script src="firebase-config.js?v=202611252032"></script>
 <script>
 /* ---------- Firebase-koppeling: inloggen, database en downloads ---------- */
 (function(){
@@ -253,7 +253,10 @@ body.full header.top,body.full .rule,body.full nav.tabs,body.full #dayinfo,body.
 .sumbar{position:absolute;top:14px;height:6px;border-radius:3px;background:color-mix(in srgb,var(--rust) 45%,transparent)}
 .blk{position:absolute;top:5px;width:calc(var(--cw) - 4px);height:24px;border-radius:4px;background:color-mix(in srgb,var(--c) 65%,transparent);border:1px solid var(--c);color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.35);
   font:600 10px/24px var(--body);text-align:center;z-index:2;touch-action:pan-x pan-y;cursor:pointer;user-select:none;-webkit-user-select:none;box-shadow:0 1px 1px rgba(0,0,0,.15)}
-.blk .loc{position:absolute;left:1px;right:1px;top:3px;font-size:8.5px;line-height:1;font-weight:700;overflow:hidden;white-space:nowrap;text-align:center}
+.blk .loc{position:absolute;left:1px;right:1px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;font-weight:800;overflow:hidden;white-space:nowrap;text-align:center;letter-spacing:-.02em}
+.blk.tx .hr{display:none}
+.blk.tx2 .loc{font-size:8.5px;letter-spacing:-.04em}
+.blk.tx.done .ck.lo{inset:auto 1px -1px auto;line-height:1;font-size:9px;background:none}
 .blk.nod,.blk.nod.done,.blk.nod.late{background:transparent!important;border:2px solid var(--ink)!important;color:var(--ink);text-shadow:none}
 .blk .hn{position:absolute;left:1px;right:1px;bottom:3px;font-size:9px;line-height:1;font-weight:800;overflow:hidden;white-space:nowrap;text-align:center}
 .namew{display:flex;gap:6px;align-items:center}.namew input{flex:1;min-width:0}
@@ -458,7 +461,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:19</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:32</p>
   </form>
 </div>
 <style>
@@ -477,6 +480,7 @@ th{background:#EB6608}
 .lg-err{color:#B42318;font-size:13px;margin:8px 0 0}
 .lg-note{color:#717171;font-size:12px;margin:12px 0 0;text-align:center}
 .lg-diag{margin-top:10px;font-size:11px;color:#717171}.lg-diag summary{cursor:pointer;text-align:center}.lg-diag pre{white-space:pre-wrap;word-break:break-word;background:#FAF8F6;border:1px solid #EEE8E2;border-radius:6px;padding:8px;max-height:220px;overflow:auto;font-size:10.5px;line-height:1.35;margin:6px 0}.lg-diag-b{font-size:11px;padding:4px 10px;border:1px solid #D3CAC2;border-radius:6px;background:#fff;cursor:pointer}
+.lg-note a{color:#B8500A;font-weight:600;text-decoration:none}.lg-note a:hover{text-decoration:underline}
 .lg-ver{color:#A8A39D;font-size:11px;margin:6px 0 0;text-align:center;letter-spacing:.04em}
 html.uitgelogd body{overflow:hidden}
 </style>
@@ -1113,7 +1117,7 @@ function blocksHTML(t){
       var i=idx[ds]; if(i==null) return;
       var nt=(t.days[ds]&&typeof t.days[ds]==='object'&&t.days[ds].o)||'', ns=(t.days[ds]&&typeof t.days[ds]==='object'&&t.days[ds].s)||'', done=isD(t.days[ds]), late=!done&&ds<tdS, off=offFor(t,ds), loc=dLoc(t,ds), hr=dHrs(t,ds);
       var inner=(ns||nt?'<i class="ob '+(ns||'n')+'"></i>':'')+(loc?'<span class="loc">'+esc(loc)+'</span>':'')+(t.hn?'<span class="hn">'+esc(t.hn)+'</span>':'')+(done?'<span class="ck'+(loc?' lo':'')+'">✓</span>':'')+(c>=22?'<span class="hr">'+hr+'</span>':'');
-      h+='<div class="blk'+(disc(t.disc)?'':' nod')+(V.rsel.indexOf(t.id+'|'+run[0])>=0?' rsel':'')+(done?' done':'')+(late?' late':'')+(off?' off':'')+'" data-t="'+t.id+'" data-d="'+ds+'" data-r="'+ri+'" data-dn="'+esc(fullD(P(ds))+' · '+t.name+' · '+hr+' uur'+(loc?' · '+loc:'')+(nt?' · opm: '+nt:''))+'" style="left:'+(i*c+2)+'px;--c:'+esc(col)+'">'+
+      h+='<div class="blk'+(loc?' tx'+(String(loc).length>3?' tx2':''):'')+(disc(t.disc)?'':' nod')+(V.rsel.indexOf(t.id+'|'+run[0])>=0?' rsel':'')+(done?' done':'')+(late?' late':'')+(off?' off':'')+'" data-t="'+t.id+'" data-d="'+ds+'" data-r="'+ri+'" data-dn="'+esc(fullD(P(ds))+' · '+t.name+' · '+hr+' uur'+(loc?' · '+loc:'')+(nt?' · opm: '+nt:''))+'" style="left:'+(i*c+2)+'px;--c:'+esc(col)+'">'+
         (k===0?'<i class="hd l" data-side="l"></i>':'')+inner+(k===run.length-1?'<i class="hd r" data-side="r"></i>':'')+'</div>';
     });
   });
@@ -1136,7 +1140,7 @@ function viewPlanning(){
   h+='</div>';
   h+='<div class="tools"><button class="btn" type="button" data-exp="pdf">🖨 PDF</button><button class="btn" type="button" data-exp="xlsx">📊 Excel</button><button class="btn danger" type="button" data-clearp="1">🗑 Planning leegmaken</button>';
   h+='<div class="seg"><button type="button" data-undo="1" '+(UNDO.length?'':'disabled')+' title="Herstel">↶ Herstel</button><button type="button" data-redo="1" '+(REDO.length?'':'disabled')+' title="Opnieuw">↷ Opnieuw</button></div>';
-  h+='<div class="seg" role="group" aria-label="Werkwijze"><button type="button" data-mode="normal" aria-pressed="'+(V.mode==='normal')+'">👆 Normaal</button><button type="button" data-mode="move" aria-pressed="'+(V.mode==='move')+'">↔ Verplaatsen</button><button type="button" data-mode="postit" aria-pressed="'+(V.mode==='postit')+'">🏷 Sticker</button><button type="button" data-mode="weather" aria-pressed="'+(V.mode==='weather')+'">🌧 Onwerkbaar</button><button type="button" data-mode="free" aria-pressed="'+(V.mode==='free')+'">🏖 Vrije dag</button><button type="button" data-mode="draw" aria-pressed="'+(V.mode==='draw')+'">✏️ Tekenen</button><button type="button" data-mode="erase" aria-pressed="'+(V.mode==='erase')+'">🧽 Gum</button></div>';
+  h+='<div class="seg" role="group" aria-label="Werkwijze"><button type="button" data-mode="normal" aria-pressed="'+(V.mode==='normal')+'">👆 Normaal</button><button type="button" data-mode="move" aria-pressed="'+(V.mode==='move')+'">↔ Verplaatsen</button><button type="button" data-mode="postit" aria-pressed="'+(V.mode==='postit')+'">🏷 Tekst/sticker</button><button type="button" data-mode="weather" aria-pressed="'+(V.mode==='weather')+'">🌧 Onwerkbaar</button><button type="button" data-mode="free" aria-pressed="'+(V.mode==='free')+'">🏖 Vrije dag</button><button type="button" data-mode="draw" aria-pressed="'+(V.mode==='draw')+'">✏️ Tekenen</button><button type="button" data-mode="erase" aria-pressed="'+(V.mode==='erase')+'">🧽 Gum</button></div>';
   h+='<button class="btn'+(V.full?' primary':'')+'" type="button" data-full="1" title="Beeldvullend">'+(V.full?'✕ Klein':'⛶ Beeldvullend')+'</button>';
   h+='<div class="spacer"></div><button class="btn" type="button" data-bedit="1" '+(n?'':'disabled')+'>✎ Bewerk</button><button class="btn" type="button" data-bcopy="1" '+(n?'':'disabled')+'>⧉ Kopie</button><button class="btn danger'+(V.armed==='bdel'?' armed':'')+'" type="button" data-bdel="1" '+(n?'':'disabled')+'>🗑 '+(V.armed==='bdel'?'Zeker? ('+n+')':'Verwijder')+'</button></div>';
   h+='<details class="mobmore"'+(window.innerWidth>=700?' open':'')+'><summary>Meer opties</summary><div class="mobbody">';
@@ -1144,7 +1148,7 @@ function viewPlanning(){
   if(V.mode==='move') h+='<div class="tools pastebar">'+(V.rsel.length?'<b>'+V.rsel.length+' stuk(ken) geselecteerd</b><div class="seg"><button type="button" data-rs="-5">◀ week</button><button type="button" data-rs="-1">◀ dag</button><button type="button" data-rs="1">dag ▶</button><button type="button" data-rs="5">week ▶</button></div><button class="btn" type="button" data-rsclear="1">✕ Wis selectie</button>':'<span style="color:var(--muted)">Tik op balken om ze te selecteren (oranje rand). Sleep daarna één ervan, of gebruik de pijlen, om ze samen te verplaatsen.</span>')+'</div>';
   if(V.tclip) h+='<div class="tools pastebar"><b>'+V.tclip.length+' regel(s) gekopieerd.</b><span style="color:var(--muted)">Tik in de planning op de dag en regel waar ze moeten komen.</span><button class="btn" type="button" data-tclear="1">✓ Klaar</button></div>';
   if(V.expMsg) h+='<p class="hint">'+esc(V.expMsg)+'</p>';
-  var hint={normal:'Tik op een blokje om de dag af te vinken. Houd een blokje even vast voor uren en bouwdeel. Vegen scrolt de planning. Wil je blokjes verschuiven of langer maken, zet dan ↔ Verplaatsen aan.',postit:'Sticker: tik op een blokje om per dag de uren en het bouwdeel in te vullen. Tik nog eens op de knop om te stoppen.',weather:'Onwerkbaar weer: tik bovenin op een dag om hem als onwerkbaar aan of uit te vinken. De planning schuift niet op; de dag wordt alleen geregistreerd. Tik nog eens op de knop om te stoppen.',free:'Vrije dag: tik bovenin op een dag om hem als vrije dag aan of uit te vinken. De werkdagen die erop vallen schuiven op. Tik nog eens op de knop om te stoppen.',move:'Verplaatsen: sleep een blokje om dat stuk te verschuiven, sleep de streepjes aan de zijkant om het langer of korter te maken. Aangevinkte regels schuiven samen op. Zet daarna Normaal weer aan.',draw:'Tekenen: tik of trek met je pen over een regel om dagen in te plannen. Tik op een bestaand blokje om het te openen. Zet Normaal aan om weer te scrollen.',erase:'Gum: tik of veeg over blokjes om ze weg te halen. Zet Normaal aan om weer te scrollen.'}[V.mode];
+  var hint={normal:'Tik op een blokje om de dag af te vinken. Houd een blokje even vast om er tekst in te zetten, of uren of een sticker. Vegen scrolt de planning. Wil je blokjes verschuiven of langer maken, zet dan ↔ Verplaatsen aan.',postit:'Tekst/sticker: tik op een blokje om er tekst in te zetten (bijv. een huisnummer), of uren, een sticker of een notitie. Bij Toepassen op kies je of het voor één dag, het hele stuk of de hele taak geldt. Tik nog eens op de knop om te stoppen.',weather:'Onwerkbaar weer: tik bovenin op een dag om hem als onwerkbaar aan of uit te vinken. De planning schuift niet op; de dag wordt alleen geregistreerd. Tik nog eens op de knop om te stoppen.',free:'Vrije dag: tik bovenin op een dag om hem als vrije dag aan of uit te vinken. De werkdagen die erop vallen schuiven op. Tik nog eens op de knop om te stoppen.',move:'Verplaatsen: sleep een blokje om dat stuk te verschuiven, sleep de streepjes aan de zijkant om het langer of korter te maken. Aangevinkte regels schuiven samen op. Zet daarna Normaal weer aan.',draw:'Tekenen: tik of trek met je pen over een regel om dagen in te plannen. Tik op een bestaand blokje om het te openen. Zet Normaal aan om weer te scrollen.',erase:'Gum: tik of veeg over blokjes om ze weg te halen. Zet Normaal aan om weer te scrollen.'}[V.mode];
   h+='<p class="hint hideful" style="margin:0 0 8px">'+hint+'</p>';
   // rooster
   h+='<div class="grid '+V.mode+'" id="grid" style="--cw:'+c+'px;--lw:'+L+'px"><div class="gin" style="width:'+(L+W)+'px">';
@@ -1458,10 +1462,10 @@ function openPostit(tid,ds,r){
   var t=T(tid); if(!t||!(ds in t.days)) return;
   var locs={}; S.tasks.forEach(function(x){ if(x.projectId!==t.projectId) return; for(var k in x.days){ var l=dLoc(x,k); if(l) locs[l]=1; } });
   var v=t.days[ds], hv=(v&&typeof v==='object'&&v.h!=null&&v.h!=='')?v.h:'';
-  var h='<div class="ov" id="ov"><form class="dlg" id="frm" style="max-width:420px"><h2>Sticker · '+esc(fullD(P(ds)))+'</h2><div class="in">';
+  var h='<div class="ov" id="ov"><form class="dlg" id="frm" style="max-width:420px"><h2>Dag · '+esc(fullD(P(ds)))+'</h2><div class="in">';
   h+='<p style="margin:0 0 12px;font-weight:600">'+esc(t.name)+'</p><div class="f" style="grid-template-columns:1fr 1fr">';
-  h+='<label>Uren deze dag<input type="number" id="p_h" min="0" max="24" step="0.5" value="'+esc(hv)+'" placeholder="'+(+t.perDay||0)+' (standaard)"></label>';
-  h+='<label>Bouwdeel<input type="text" id="p_l" list="p_locs" value="'+esc(dLoc(t,ds))+'" placeholder="bijv. Blok A, 1.1, woning 12"><datalist id="p_locs">'+Object.keys(locs).sort().map(function(l){return '<option value="'+esc(l)+'">';}).join('')+'</datalist></label>';
+  h+='<label class="w">Tekst in de balk<input type="text" id="p_l" list="p_locs" maxlength="40" value="'+esc(dLoc(t,ds))+'" placeholder="bijv. 12, Blok A, woning 3" style="font-size:17px;font-weight:600"><datalist id="p_locs">'+Object.keys(locs).sort().map(function(l){return '<option value="'+esc(l)+'">';}).join('')+'</datalist></label>';
+  h+='<label>Uren deze dag<input type="number" id="p_h" min="0" max="24" step="0.5" value="'+esc(hv)+'" placeholder="'+(+t.perDay||0)+' (standaard)"></label><label></label>';
   var curS=(v&&typeof v==='object'&&v.s)||'';
   h+='<div class="w"><span style="font-size:12px;color:var(--muted)">Sticker (alleen deze dag)</span><div class="seg">'+[['','Geen'],['geel','! Geel'],['rood','! Rood']].map(function(x){return '<button type="button" data-st="'+x[0]+'" aria-pressed="'+(curS===x[0])+'">'+x[1]+'</button>';}).join('')+'</div><input type="hidden" id="p_s" value="'+curS+'"></div>';
   h+='<label class="w">Notitie (alleen deze dag)<textarea id="p_o" rows="2" placeholder="bijv. wacht op levering">'+esc((v&&typeof v==='object'&&v.o)||'')+'</textarea></label>';
@@ -1469,6 +1473,7 @@ function openPostit(tid,ds,r){
   h+='<label class="w">Toepassen op<select id="p_scope"><option value="day">Alleen deze dag</option><option value="run">Dit hele stuk ('+((runs(t)[r]||[]).length)+' dagen)</option><option value="all">Hele taak ('+tCount(t)+' dagen)</option></select></label>';
   h+='</div><p class="hint">Laat Uren leeg om de standaard van de taak te gebruiken ('+(+t.perDay||0)+' uur).</p><div class="acts"><button class="btn danger" type="button" id="p_del">Dag verwijderen</button><span class="spacer"></span><button class="btn" type="button" id="p_cancel">Annuleer</button><button class="btn save" type="submit">Opslaan</button></div></div></form></div>';
   document.getElementById('modal').innerHTML=h;
+  setTimeout(function(){ var pl=document.getElementById('p_l'); if(pl&&window.innerWidth>=700){ pl.focus(); pl.select(); } },30);
   var $=function(x){return document.getElementById(x);};
   $('p_cancel').addEventListener('click',closeModal);
   document.querySelectorAll('#frm [data-st]').forEach(function(b){ b.addEventListener('click',function(){ $('p_s').value=b.getAttribute('data-st'); document.querySelectorAll('#frm [data-st]').forEach(function(x){ x.setAttribute('aria-pressed',x===b?'true':'false'); }); }); });
