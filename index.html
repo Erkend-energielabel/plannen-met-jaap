@@ -16,7 +16,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js?v=202611252000"></script>
+<script src="firebase-config.js?v=202611252005"></script>
 <script>
 /* ---------- Firebase-koppeling: inloggen, database en downloads ---------- */
 (function(){
@@ -458,10 +458,11 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note">Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:00</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:05</p>
   </form>
 </div>
 <style>
+[hidden]:not([hidden=until-found i]){display:none!important}
 .login{position:fixed;inset:0;z-index:200;background:#EB6608;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
 .lg-card{background:#fff;color:#1D1D1B;border-radius:14px;padding:24px;width:min(380px,100%);box-shadow:0 1px 3px rgba(0,0,0,.13);font-family:"Lexend",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .lg-sub{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#717171;font-weight:600}
