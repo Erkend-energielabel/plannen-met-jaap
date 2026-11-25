@@ -53,6 +53,15 @@ Wat je in de Firebase console moet doen:
 Wie wel kan inloggen maar nog niet is toegevoegd, krijgt het scherm **Geen toegang**
 met zijn eigen e-mailadres erbij, zodat hij dat kan doorgeven.
 
+## Microsoft-inloggen
+
+De inlog loopt via je eigen domein, niet via `gereedmelding-cv.firebaseapp.com`.
+Daarvoor staan in de repository **erkend-energielabel.github.io** twee kleine pagina's
+(`__/auth/handler` en `__/auth/iframe`). Die mogen niet weg.
+
+In de Microsoft-app-registratie *Gereedmelding kantoor* (Azure) staat daarom ook de
+omleidings-URI `https://erkend-energielabel.github.io/__/auth/handler`.
+
 ## Rollen
 
 * **Beheerder** — maakt projecten aan, geeft toegang, mag alles.

@@ -2,7 +2,7 @@
 // Deze gegevens zijn niet geheim; de beveiliging zit in de login en de Firestore-regels.
 window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyDs6Y1PAKNURA4lde5Xe6Zr5kZq7iZBzYE",
-  authDomain: "gereedmelding-cv.firebaseapp.com",
+  authDomain: "erkend-energielabel.github.io",  // inloghulp staat op dit domein (repo erkend-energielabel.github.io), zodat Microsoft-inloggen ook werkt als de browser cookies van derden blokkeert
   projectId: "gereedmelding-cv",
   storageBucket: "gereedmelding-cv.firebasestorage.app",
   messagingSenderId: "1025814267228",
