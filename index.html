@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:58</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:59</p>
   </form>
 </div>
 <style>
@@ -1685,7 +1685,9 @@ app.addEventListener('pointerdown',function(e){
   var tid=(blk||cells).getAttribute('data-t');
   if(V.mode==='erase'){ snap(); G={k:'erase',geo:gg}; eraseAt(e.clientX,e.clientY); cap(e); e.preventDefault(); return; }
   if(V.mode==='draw'&&blk){ var dt={k:'dtap',tid:tid,geo:gg,x0:e.clientX,y0:e.clientY,c0:colAt(gg,e.clientX)}; G=dt; dt.timer=setTimeout(function(){ if(G===dt){ G=null; openEdit(dt.tid); } },400); cap(e); e.preventDefault(); return; }
-  if(V.mode==='draw'){ snap(); var c0=colAt(gg,e.clientX); G={k:'draw',tid:tid,geo:gg,last:c0}; paint(tid,gg.C[c0]); cap(e); e.preventDefault(); return; }
+  if(V.mode==='draw'){ var c0=colAt(gg,e.clientX), nowT=Date.now(), pv=V.dtap; V.dtap={t:nowT,tid:tid,c:c0};
+    if(!(pv&&pv.tid===tid&&pv.c===c0&&nowT-pv.t<500)) return; /* eerste tik: nog niet kleuren, wacht op tweede tik */
+    V.dtap=null; snap(); G={k:'draw',tid:tid,geo:gg,last:c0}; paint(tid,gg.C[c0]); cap(e); e.preventDefault(); return; }
   if(blk&&(V.mode==='normal'||V.mode==='postit')){ var gg2={k:'tick',tid:tid,ds:blk.getAttribute('data-d'),r:+blk.getAttribute('data-r'),x0:e.clientX,y0:e.clientY,moved:false}; G=gg2;
     if(V.mode==='normal') gg2.timer=setTimeout(function(){ if(G===gg2&&!gg2.moved){ G=null; openPostit(gg2.tid,gg2.ds,gg2.r); } },550);
     return; }
