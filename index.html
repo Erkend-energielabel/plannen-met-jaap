@@ -16,7 +16,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js?v=202611252044"></script>
+<script src="firebase-config.js?v=202611252046"></script>
 <script>
 /* ---------- Firebase-koppeling: inloggen, database en downloads ---------- */
 (function(){
@@ -464,7 +464,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:44</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:46</p>
   </form>
 </div>
 <style>
@@ -1768,7 +1768,7 @@ document.addEventListener('click',function(e){
   if((el=t.closest('[data-lw]'))){ V.lwPct=+el.getAttribute('data-lw'); try{localStorage.setItem('bouwplanner.lw',V.lwPct);}catch(e){} render(); return; }
   if((el=t.closest('[data-zoom]'))){ V.zoom=+el.getAttribute('data-zoom'); render(); return; }
   if((el=t.closest('[data-weeks]'))){ V.weeks=+el.getAttribute('data-weeks'); keepView(); render(); return; }
-  if((el=t.closest('[data-nav]'))){ var k=+el.getAttribute('data-nav'); V.start=k===0?monday(today())-7*DAY:V.start+k*7*DAY; render(); return; }
+  if((el=t.closest('[data-nav]'))){ var k=+el.getAttribute('data-nav'); V.start=k===0?monday(today())-14*DAY:V.start+k*7*DAY; render(); return; }
   if(t.closest('[data-newtask]')){ openEdit(null,''); return; }
   if((el=t.closest('[data-addt]'))){ openEdit(null,el.getAttribute('data-addt')); return; }
   if(t.closest('[data-addph]')){ var p=curProj(); if(p){ var nid=uid(); mut(function(){ S.chapters.push({id:nid,projectId:p.id,name:'Nieuw hoofdstuk'}); }); setTimeout(function(){ var el=document.querySelector('[data-rch="'+nid+'"]'); if(el){ el.scrollIntoView({block:'center'}); el.focus(); try{ var r=document.createRange(); r.selectNodeContents(el); var sl=window.getSelection(); sl.removeAllRanges(); sl.addRange(r); }catch(err){} } },60); } return; }
@@ -1876,6 +1876,7 @@ function applyTheme(t){ var r=document.documentElement; if(t) r.setAttribute('da
 document.getElementById('theme').addEventListener('click',function(){ var cur=document.documentElement.getAttribute('data-theme'); var dark=cur==='dark'||(!cur&&matchMedia('(prefers-color-scheme: dark)').matches); var n=dark?'light':'dark'; try{localStorage.setItem('bouwplanner.theme',n);}catch(e){} applyTheme(n); });
 
 loadView();
+V.start=monday(today())-14*DAY; // bij openen altijd 2 weken voor vandaag beginnen
 startUser();
 render();
 function fixLogo(){
