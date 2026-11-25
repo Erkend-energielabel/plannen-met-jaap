@@ -75,6 +75,21 @@
     });
   };
   window.csLogout=function(){ auth.signOut(); };
+  window.csMaakGebruiker=function(mail,pw){
+    var tw; try{ tw=firebase.app('tweede'); }catch(e){ tw=firebase.initializeApp(cfg,'tweede'); }
+    return tw.auth().createUserWithEmailAndPassword(String(mail).trim(),String(pw)).then(function(){
+      return tw.auth().signOut().then(function(){ return {ok:true,id:String(mail).trim().toLowerCase()}; });
+    }).catch(function(e){
+      var c=e&&e.code;
+      return {ok:false,fout:c==='auth/email-already-in-use'?'Dit e-mailadres heeft al een inlog. Voeg hem toe met het zoekveld hierboven.'
+        :c==='auth/invalid-email'?'Dit e-mailadres klopt niet.'
+        :c==='auth/weak-password'?'Het wachtwoord moet minstens 6 tekens zijn.'
+        :c==='auth/operation-not-allowed'?'Inloggen met e-mail en wachtwoord staat uit in Firebase.'
+        :c==='auth/network-request-failed'?'Geen verbinding. Aanmaken kan alleen online.'
+        :'Aanmaken mislukt ('+(c||'onbekend')+').'};
+    });
+  };
+  window.csWachtwoordMail=function(mail){ return auth.sendPasswordResetEmail(String(mail).trim()).then(function(){ return {ok:true}; },function(e){ return {ok:false,fout:'Versturen mislukt ('+((e&&e.code)||'onbekend')+').'}; }); };
   if(MS.tenant){
     var prov=new firebase.auth.OAuthProvider('microsoft.com');
     prov.setCustomParameters({tenant:MS.tenant,prompt:'select_account'}); prov.addScope('email'); prov.addScope('profile');
@@ -1234,10 +1249,11 @@ function viewToegang(){
     if(m.role!=='beheerder') h+='<div class="acc-pr">'+S.projects.map(function(p){ return '<label class="chk"><input type="checkbox" data-mproj="'+esc(m.uid)+'" value="'+p.id+'"'+((m.projects||[]).indexOf(p.id)>=0?' checked':'')+'> '+esc((p.nr?p.nr+' · ':'')+p.name)+'</label>'; }).join('')+'</div>';
     h+='</div>';
   });
-  h+='</div><div class="card"><h2>Persoon toevoegen</h2>';
+  h+='</div>'+(V.accMsg?'<p class="hint" style="color:var(--good);font-weight:600">'+esc(V.accMsg)+'</p>':'')+'<div class="card"><h2>Persoon toevoegen</h2>'; V.accMsg='';
   h+='<ol class="steps"><li>Maak voor deze persoon een inlog aan in Firebase: <b>Authentication</b> &rarr; <b>Users</b> &rarr; <b>Add user</b>, met zijn e-mailadres en een wachtwoord.</li><li>Typ hieronder hetzelfde e-mailadres en tik op <b>+ Toevoegen</b>.</li><li>Kies links zijn rol en vink zijn projecten aan.</li></ol>';
   if(u&&typeof u.search==='function') h+='<input type="search" id="accQ" placeholder="E-mailadres, bijv. naam@bedrijf.nl" autocomplete="off"><div id="accRes" class="accres"></div>';
   else h+='<p class="hint">Inloggen is nog niet gereed. Herlaad de pagina.</p>';
+  if(window.csMaakGebruiker) h+='<div class="card"><h2>Nieuwe inlog aanmaken</h2><p class="hint">Heeft iemand nog geen inlog? Maak hem hier aan, dan hoef je niet naar Firebase. Hij logt in met dit e-mailadres en wachtwoord en kan dat later zelf wijzigen.</p><div class="f" style="grid-template-columns:1fr 1fr"><label>E-mailadres<input type="email" id="nuMail" autocomplete="off" placeholder="naam@bedrijf.nl"></label><label>Wachtwoord<input type="text" id="nuPw" autocomplete="off" placeholder="minimaal 6 tekens"></label></div><p class="hint" id="nuMsg"></p><div class="acts"><button class="btn primary" type="button" data-newuser="1">Inlog aanmaken en toevoegen</button></div></div>';
   h+='</div><div class="card"><h2>Rollen</h2><div class="rolelist">';
   h+='<p><b>Beheerder</b> — maakt projecten aan, geeft toegang en mag alles.</p>';
   h+='<p><b>Projectleider</b> — plant en wijzigt alles in zijn eigen projecten. Maakt geen projecten aan.</p>';
@@ -1626,6 +1642,22 @@ document.addEventListener('click',function(e){
   if((el=t.closest('[data-uday]'))){ V.uDay=+el.getAttribute('data-uday'); render(); return; }
   if((el=t.closest('[data-utick]'))){ var q=el.getAttribute('data-utick').split('|'), tk=T(q[0]); if(tk&&canProj(tk.projectId)) mut(function(){ if(q[1] in tk.days) setD(tk,q[1],!isD(tk.days[q[1]])); }); return; }
   if((el=t.closest('[data-upost]'))){ var q2=el.getAttribute('data-upost').split('|'), tk2=T(q2[0]); if(tk2) openPostit(tk2.id,q2[1],runIdx(tk2,q2[1])); return; }
+  if((el=t.closest('[data-newuser]'))){
+    if(!isAdmin()||!window.csMaakGebruiker) return;
+    var nm=document.getElementById('nuMail'), nw=document.getElementById('nuPw'), nmsg=document.getElementById('nuMsg');
+    var mail=String(nm?nm.value:'').trim().toLowerCase(), pw=String(nw?nw.value:'');
+    if(!/^[^@\s]+@[^@\s]+[.][^@\s]{2,}$/.test(mail)){ if(nmsg) nmsg.textContent='Vul een geldig e-mailadres in.'; return; }
+    if(pw.length<6){ if(nmsg) nmsg.textContent='Het wachtwoord moet minstens 6 tekens zijn.'; return; }
+    if(members().some(function(x){return x.uid===mail;})){ if(nmsg) nmsg.textContent='Deze persoon staat al in de lijst.'; return; }
+    el.disabled=true; if(nmsg) nmsg.textContent='Bezig\u2026';
+    Promise.resolve(window.csMaakGebruiker(mail,pw)).then(function(r){
+      el.disabled=false;
+      if(!r||!r.ok){ if(nmsg) nmsg.textContent=(r&&r.fout)||'Aanmaken mislukt.'; return; }
+      V.accMsg='Inlog aangemaakt voor '+mail+'. Kies hieronder zijn rol en projecten.';
+      mut(function(){ members().push({uid:mail,role:'uitvoerder',projects:V.pid?[V.pid]:[],discs:[],note:'',view:'alles'}); });
+    },function(){ el.disabled=false; if(nmsg) nmsg.textContent='Aanmaken mislukt.'; });
+    return;
+  }
   if((el=t.closest('[data-addm]'))){ if(!isAdmin()) return; var nu=el.getAttribute('data-addm'); mut(function(){ members().push({uid:nu,role:'uitvoerder',projects:V.pid?[V.pid]:[]}); }); return; }
   if((el=t.closest('[data-mdel]'))){ if(!isAdmin()) return; var mu=el.getAttribute('data-mdel'); if(V.armed==='m'+mu){ V.armed=null; mut(function(){ S.access.members=members().filter(function(m){return m.uid!==mu;}); }); } else { V.armed='m'+mu; render(); setTimeout(function(){ if(V.armed==='m'+mu){ V.armed=null; render(); } },4000); } return; }
   if((el=t.closest('[data-tab]'))){ V.tab=el.getAttribute('data-tab'); V.armed=null; V.expMsg=''; render(); return; }
