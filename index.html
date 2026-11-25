@@ -16,7 +16,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js?v=202611252035"></script>
+<script src="firebase-config.js?v=202611252040"></script>
 <script>
 /* ---------- Firebase-koppeling: inloggen, database en downloads ---------- */
 (function(){
@@ -40,9 +40,10 @@
   }; }
   if(!/^https?:$/.test(location.protocol)){ toon(true); fout('Open de app via '+APPURL+' en niet als los bestand.'); return; }
   if(!cfg||!window.firebase){ toon(true); fout(!cfg?'Firebase is nog niet ingesteld: vul firebase-config.js in (zie LEESMIJ).':'Kan Firebase niet laden. Controleer je verbinding en herlaad de pagina.'); return; }
-  firebase.initializeApp(cfg);
-  var fs=firebase.firestore(); try{ fs.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(e){}
-  var auth=firebase.auth(), dbw={doc:function(pp){ return wDoc(fs.doc(pp)); }};
+  // Eigen app-naam: de inlog van de planning staat los van de gereedmelding-app op hetzelfde domein.
+  var fapp=firebase.initializeApp(cfg,'planner'); window.csApp=fapp;
+  var fs=fapp.firestore(); try{ fs.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(e){}
+  var auth=fapp.auth(), dbw={doc:function(pp){ return wDoc(fs.doc(pp)); }};
   var MSD=MS.domein?new RegExp('@'+String(MS.domein).replace(/[.]/g,'[.]')+'$','i'):null;
   function isMsKantoor(u){ if(!u||!MSD) return false; if(u.email&&MSD.test(u.email)) return true; return (u.providerData||[]).some(function(x){ return x&&x.email&&MSD.test(x.email); }); }
   var eerst=true, klaar=false;
@@ -462,7 +463,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:35</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:40</p>
   </form>
 </div>
 <style>
