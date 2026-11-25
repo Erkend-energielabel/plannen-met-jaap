@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function ingelogd() { return request.auth != null; }
+    function beheerder() {
+      return request.auth != null && (
+        request.auth.token.email == 'kantoor@gereedmelding.app'
+        || (request.auth.token.firebase.sign_in_provider == 'microsoft.com'
+            && request.auth.token.email.matches('.*@delaatbouwbegeleiding[.]nl$'))
+      );
+    }
+
+    // ---- Plannen met Jaap ----
+    // De hele planning staat in planner/v1. Iedereen die is ingelogd mag lezen en
+    // bijwerken, want ook een uitvoerder slaat zijn afvinken op. Wie wat mag zien en
+    // doen, regelt het tabblad Toegang in de app. Verwijderen mag alleen de beheerder.
+    match /planner/{id} {
+      allow read, create, update: if ingelogd();
+      allow delete: if beheerder();
+    }
+
+    // ---- Gereedmelding CV (laten staan als je hetzelfde Firebase-project gebruikt) ----
+    match /meldingen/{id} {
+      allow read, create, update: if ingelogd();
+      allow delete: if beheerder();
+    }
+    match /fotos/{id}     { allow read, write: if ingelogd(); }
+    match /complexen/{id} { allow read: if ingelogd(); allow write: if beheerder(); }
+    match /gevels/{id}    { allow read: if ingelogd(); allow write: if beheerder(); }
+    match /config/{id}    { allow read: if ingelogd(); allow write: if beheerder(); }
+  }
+}

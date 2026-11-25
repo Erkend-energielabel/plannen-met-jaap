@@ -1,0 +1,9 @@
+{
+  "name": "Plannen met Jaap",
+  "short_name": "Planning",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FFF1E4",
+  "theme_color": "#EB6608",
+  "icons": [{"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]
+}
