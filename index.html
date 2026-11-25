@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:59</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 21:00</p>
   </form>
 </div>
 <style>
@@ -1683,6 +1683,9 @@ app.addEventListener('pointerdown',function(e){
   if(!blk&&!cells) return;
   var gg=geo(); if(!gg) return;
   var tid=(blk||cells).getAttribute('data-t');
+  if(blk&&V.mode==='normal'){ var bk=tid+'|'+blk.getAttribute('data-d')+'|'+blk.getAttribute('data-r'), nT=Date.now(), bp=V.btap;
+    var cnt=(bp&&bp.k===bk&&nT-bp.t<700)?bp.n+1:1; V.btap={k:bk,t:nT,n:cnt};
+    if(cnt>=3){ V.btap=null; G={k:'move',tid:tid,ds:blk.getAttribute('data-d'),r:+blk.getAttribute('data-r'),x0:e.clientX,geo:gg,dd:0,moved:false,tri:true}; cap(e); e.preventDefault(); return; } }
   if(V.mode==='erase'){ snap(); G={k:'erase',geo:gg}; eraseAt(e.clientX,e.clientY); cap(e); e.preventDefault(); return; }
   if(V.mode==='draw'&&blk){ var dt={k:'dtap',tid:tid,geo:gg,x0:e.clientX,y0:e.clientY,c0:colAt(gg,e.clientX)}; G=dt; dt.timer=setTimeout(function(){ if(G===dt){ G=null; openEdit(dt.tid); } },400); cap(e); e.preventDefault(); return; }
   if(V.mode==='draw'){ var c0=colAt(gg,e.clientX), nowT=Date.now(), pv=V.dtap; V.dtap={t:nowT,tid:tid,c:c0};
@@ -1714,6 +1717,7 @@ app.addEventListener('pointerup',function(e){
   if(g.k==='tick'){ clearTimeout(g.timer); if(g.moved) return; if(V.mode==='postit'){ openPostit(g.tid,g.ds,g.r); return; } mut(function(){ var t=T(g.tid); if(t&&(g.ds in t.days)) setD(t,g.ds,!isD(t.days[g.ds])); }); return; }
   if(g.k==='tap'){ if(!g.moved&&V.tclip){ var ci=colAt(g.geo,e.clientX); mut(function(){pasteRows(g.tid,g.geo.C[ci]);}); } return; }
   if(g.k==='move'){
+    if(g.tri&&!g.moved){ render(); return; }
     if(!g.moved){ var kk=runKeyOf(T(g.tid),g.r); if(kk){ var ix=V.rsel.indexOf(kk); if(ix>=0) V.rsel.splice(ix,1); else V.rsel.push(kk); } render(); return; }
     if(g.dd===0){ render(); return; }
     mut(function(){applyMove(g);}); return;
