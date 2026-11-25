@@ -94,13 +94,15 @@
     var prov=new firebase.auth.OAuthProvider('microsoft.com');
     prov.setCustomParameters({tenant:MS.tenant,prompt:'select_account'}); prov.addScope('email'); prov.addScope('profile');
     function msFout(e){ return 'Microsoft-inloggen mislukt ('+((e&&e.code)||'onbekend')+'). Probeer opnieuw.'; }
-    auth.getRedirectResult().catch(function(e){ fout(msFout(e)); });
     ui(function(){
       var b=document.getElementById('lgMs'); if(!b) return; b.hidden=false;
       b.addEventListener('click',function(){ fout(''); b.disabled=true;
         auth.signInWithPopup(prov).catch(function(e){ var c=e&&e.code;
-          if(c==='auth/popup-blocked'||c==='auth/operation-not-supported-in-environment') return auth.signInWithRedirect(prov);
           if(c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request') return;
+          if(c==='auth/popup-blocked'||c==='auth/operation-not-supported-in-environment'){
+            fout('Je browser blokkeert het Microsoft-venster. Sta pop-ups toe voor dit adres, of log in met je e-mailadres en wachtwoord.');
+            return;
+          }
           fout(msFout(e));
         }).then(function(){ b.disabled=false; },function(e){ b.disabled=false; fout(msFout(e)); });
       });
