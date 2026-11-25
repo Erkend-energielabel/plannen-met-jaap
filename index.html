@@ -16,7 +16,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js?v=202611252013"></script>
+<script src="firebase-config.js?v=202611252019"></script>
 <script>
 /* ---------- Firebase-koppeling: inloggen, database en downloads ---------- */
 (function(){
@@ -87,7 +87,7 @@
       return tw.auth().signOut().then(function(){ return {ok:true,id:String(mail).trim().toLowerCase()}; });
     }).catch(function(e){
       var c=e&&e.code;
-      return {ok:false,fout:c==='auth/email-already-in-use'?'Dit e-mailadres heeft al een inlog. Voeg hem toe met het zoekveld hierboven.'
+      return {ok:false,code:c,fout:c==='auth/email-already-in-use'?'Dit e-mailadres heeft al een inlog.'
         :c==='auth/invalid-email'?'Dit e-mailadres klopt niet.'
         :c==='auth/weak-password'?'Het wachtwoord moet minstens 6 tekens zijn.'
         :c==='auth/operation-not-allowed'?'Inloggen met e-mail en wachtwoord staat uit in Firebase.'
@@ -456,9 +456,9 @@ th{background:#EB6608}
     <input id="lgCode" type="password" autocomplete="current-password" placeholder="Voer je wachtwoord in" enterkeyhint="go">
     <p class="lg-err" id="lgErr" hidden></p>
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
-    <p class="lg-note">Geen inlog? Vraag de beheerder om een account.</p>
+    <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:13</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:19</p>
   </form>
 </div>
 <style>
@@ -496,6 +496,14 @@ html.uitgelogd body{overflow:hidden}
     });
   });
 })();
+(function(){ var a=document.getElementById('lgForgot'); if(!a) return; a.addEventListener('click',function(e){ e.preventDefault();
+  var m=String(document.getElementById('lgMail').value||'').trim(), er=document.getElementById('lgErr');
+  function zeg(t,ok){ er.textContent=t; er.hidden=!t; er.style.color=ok?'#1F7A4A':''; }
+  if(!/^[^@\s]+@[^@\s]+[.][^@\s]{2,}$/.test(m)){ zeg('Vul eerst je e-mailadres in, tik dan op Wachtwoord vergeten.'); document.getElementById('lgMail').focus(); return; }
+  if(!window.csWachtwoordMail){ zeg('Dit kan nu niet. Herlaad de pagina.'); return; }
+  zeg('Bezig\u2026',true);
+  window.csWachtwoordMail(m).then(function(r){ zeg(r&&r.ok?'Als er een inlog bestaat voor '+m+', ontvang je zo een mail om een nieuw wachtwoord te kiezen. Kijk ook bij ongewenst.':((r&&r.fout)||'Versturen mislukt.'),r&&r.ok); });
+}); })();
 (function(){ var f=document.getElementById('lgForm');
   f.addEventListener('submit',function(e){ e.preventDefault();
     var b=document.getElementById('lgBtn'); b.disabled=true; b.textContent='Bezig\u2026';
@@ -1314,6 +1322,7 @@ function viewToegang(){
     h+='<p class="hint" id="shareMsg"></p><div class="acts"><button class="btn primary" type="button" data-sharecopy="1">📋 Kopiëren</button>';
     h+='<a class="btn" href="https://wa.me/?text='+encodeURIComponent(sh.tekst)+'" target="_blank" rel="noopener">💬 WhatsApp</a>';
     h+='<a class="btn" href="mailto:'+encodeURIComponent(sh.mail)+'?subject='+encodeURIComponent('Toegang tot Plannen met Jaap')+'&body='+encodeURIComponent(sh.tekst)+'">✉ Mail</a>';
+    if(sh.bestond&&window.csWachtwoordMail) h+='<button class="btn" type="button" data-resetmail="'+esc(sh.mail)+'">🔑 Herstelmail sturen</button>';
     h+='<span class="spacer"></span><button class="btn" type="button" data-shareclose="1">Sluiten</button></div></div>'; }
   h+='<div class="card"><h2>Persoon toevoegen</h2>';
   h+='<ol class="steps"><li>Maak voor deze persoon een inlog aan in Firebase: <b>Authentication</b> &rarr; <b>Users</b> &rarr; <b>Add user</b>, met zijn e-mailadres en een wachtwoord.</li><li>Typ hieronder hetzelfde e-mailadres en tik op <b>+ Toevoegen</b>.</li><li>Kies links zijn rol en vink zijn projecten aan.</li></ol>';
@@ -1708,6 +1717,8 @@ document.addEventListener('click',function(e){
   if((el=t.closest('[data-uday]'))){ V.uDay=+el.getAttribute('data-uday'); render(); return; }
   if((el=t.closest('[data-utick]'))){ var q=el.getAttribute('data-utick').split('|'), tk=T(q[0]); if(tk&&canProj(tk.projectId)) mut(function(){ if(q[1] in tk.days) setD(tk,q[1],!isD(tk.days[q[1]])); }); return; }
   if((el=t.closest('[data-upost]'))){ var q2=el.getAttribute('data-upost').split('|'), tk2=T(q2[0]); if(tk2) openPostit(tk2.id,q2[1],runIdx(tk2,q2[1])); return; }
+  if((el=t.closest('[data-resetmail]'))){ if(!isAdmin()||!window.csWachtwoordMail) return; var rm=el.getAttribute('data-resetmail'), smx=document.getElementById('shareMsg'); el.disabled=true;
+    Promise.resolve(window.csWachtwoordMail(rm)).then(function(r){ el.disabled=false; if(smx) smx.textContent=r&&r.ok?'Herstelmail verstuurd naar '+rm+'. Hij kiest daarmee zelf een nieuw wachtwoord.':((r&&r.fout)||'Versturen mislukt.'); }); return; }
   if(t.closest('[data-shareclose]')){ V.accShare=null; render(); return; }
   if(t.closest('[data-sharecopy]')){ var ta=document.getElementById('shareTxt'), sm=document.getElementById('shareMsg'); if(!ta) return;
     var klaar=function(){ if(sm) sm.textContent='Gekopieerd. Plak het in WhatsApp, mail of sms.'; };
@@ -1724,6 +1735,13 @@ document.addEventListener('click',function(e){
     el.disabled=true; if(nmsg) nmsg.textContent='Bezig\u2026';
     Promise.resolve(window.csMaakGebruiker(mail,pw)).then(function(r){
       el.disabled=false;
+      if(r&&r.code==='auth/email-already-in-use'){
+        var pr0=curProj(), url0=window.APP_URL||location.href.split('?')[0];
+        V.accMsg=mail+' had al een inlog en staat weer in de lijst. Zijn wachtwoord is niet veranderd.';
+        V.accShare={mail:mail,bestond:true,tekst:'Hoi,\n\nJe hebt weer toegang tot de planning'+(pr0?' van '+(pr0.nr?pr0.nr+' ':'')+pr0.name:'')+' in Plannen met Jaap.\n\nOpen de app: '+url0+'\nE-mailadres: '+mail+'\nWachtwoord: je bestaande wachtwoord. Kwijt? Tik op het inlogscherm op Wachtwoord vergeten.\n\nTip: zet de app op je beginscherm, dan heb je hem altijd bij de hand.'};
+        mut(function(){ members().push({uid:mail,role:'uitvoerder',projects:V.pid?[V.pid]:[],discs:[],note:'',view:'alles'}); });
+        return;
+      }
       if(!r||!r.ok){ if(nmsg) nmsg.textContent=(r&&r.fout)||'Aanmaken mislukt.'; return; }
       V.accMsg='Inlog aangemaakt voor '+mail+'. Kies hieronder zijn rol en projecten.';
       var pr=curProj(), url=window.APP_URL||location.href.split('?')[0];
