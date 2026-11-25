@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:49</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:58</p>
   </form>
 </div>
 <style>
@@ -1042,6 +1042,14 @@ function cw(){return Math.max(14,Math.round(34*V.zoom/100));}
 function lw(){var base=window.innerWidth<700?210:330; return Math.round(base*(V.lwPct||100)/100);}
 function cols(){var a=[],ms=V.start,end=V.start+V.weeks*7*DAY;for(;ms<end;ms+=DAY){if(!isWE(ms))a.push(ms);}return a;}
 function render(){
+  var wy=window.scrollY||0, wx=window.scrollX||0, md=document.querySelector('details.mobmore'), mdOpen=md?md.open:null;
+  var ae=document.activeElement, aid=ae&&ae.id&&ae.tagName==='INPUT'?ae.id:null, ast=aid?ae.selectionStart:null;
+  renderInner();
+  if(mdOpen!==null){ var md2=document.querySelector('details.mobmore'); if(md2) md2.open=mdOpen; }
+  if(wy||wx) window.scrollTo(wx,wy);
+  if(aid){ var ae2=document.getElementById(aid); if(ae2){ try{ ae2.focus({preventScroll:true}); if(ast!=null) ae2.setSelectionRange(ast,ast); }catch(e){} } }
+}
+function renderInner(){
   var RT=tabsFor(), rl=role(); document.body.setAttribute('data-role',rl);
   if(RT.length&&!RT.some(function(x){return x[0]===V.tab;})) V.tab='planning';
   if(isUitv()&&['normal','postit'].indexOf(V.mode)<0) V.mode='normal';
