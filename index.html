@@ -16,7 +16,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js?v=202611252032"></script>
+<script src="firebase-config.js?v=202611252035"></script>
 <script>
 /* ---------- Firebase-koppeling: inloggen, database en downloads ---------- */
 (function(){
@@ -255,6 +255,7 @@ body.full header.top,body.full .rule,body.full nav.tabs,body.full #dayinfo,body.
   font:600 10px/24px var(--body);text-align:center;z-index:2;touch-action:pan-x pan-y;cursor:pointer;user-select:none;-webkit-user-select:none;box-shadow:0 1px 1px rgba(0,0,0,.15)}
 .blk .loc{position:absolute;left:1px;right:1px;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;font-weight:800;overflow:hidden;white-space:nowrap;text-align:center;letter-spacing:-.02em}
 .blk.tx .hr{display:none}
+.blk .loc{color:#1D1D1B;text-shadow:0 0 2px rgba(255,255,255,.85),0 0 1px #fff}
 .blk.tx2 .loc{font-size:8.5px;letter-spacing:-.04em}
 .blk.tx.done .ck.lo{inset:auto 1px -1px auto;line-height:1;font-size:9px;background:none}
 .blk.nod,.blk.nod.done,.blk.nod.late{background:transparent!important;border:2px solid var(--ink)!important;color:var(--ink);text-shadow:none}
@@ -461,7 +462,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:32</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:35</p>
   </form>
 </div>
 <style>
