@@ -108,9 +108,13 @@
     function msFout(e){ return 'Microsoft-inloggen mislukt ('+((e&&e.code)||'onbekend')+'). Probeer opnieuw.'; }
     ui(function(){
       var b=document.getElementById('lgMs'); if(!b) return; b.hidden=false;
-      b.addEventListener('click',function(){ fout(''); b.disabled=true;
+      b.addEventListener('click',function(){ fout(''); b.disabled=true; var t0=Date.now();
         auth.signInWithPopup(prov).catch(function(e){ var c=e&&e.code;
-          if(c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request') return;
+          if(c==='auth/cancelled-popup-request') return;
+          if(c==='auth/popup-closed-by-user'){
+            if(Date.now()-t0>4000) fout('Microsoft-inloggen is niet afgerond. Je browser blokkeert waarschijnlijk cookies van derden. Log in met je e-mailadres en wachtwoord.');
+            return;
+          }
           if(c==='auth/popup-blocked'||c==='auth/operation-not-supported-in-environment'){
             fout('Je browser blokkeert het Microsoft-venster. Sta pop-ups toe voor dit adres, of log in met je e-mailadres en wachtwoord.');
             return;
@@ -447,7 +451,7 @@ th{background:#EB6608}
     <p class="lg-err" id="lgErr" hidden></p>
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note">Geen inlog? Vraag de beheerder om een account.</p>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 19:44</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 19:50</p>
   </form>
 </div>
 <style>
