@@ -16,7 +16,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<script src="firebase-config.js?v=202611251954"></script>
+<script src="firebase-config.js?v=202611252000"></script>
 <script>
 /* ---------- Firebase-koppeling: inloggen, database en downloads ---------- */
 (function(){
@@ -26,7 +26,11 @@
   var dl={save:function(o){return new Promise(function(res){var blob=o.data instanceof Blob?o.data:new Blob([o.data]);var u=URL.createObjectURL(blob);var a=document.createElement('a');a.href=u;a.download=o.filename||'download';a.rel='noopener';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove();},6000);res({status:'saved'});});}};
   window.claude={use:function(n){ if(n==='downloads')return Promise.resolve(dl); if(n==='db')return dbReady; if(n==='user')return userReady; return Promise.resolve(null); }};
   function ui(f){ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',f); else f(); }
-  function fout(t){ ui(function(){ var e=document.getElementById('lgErr'); if(e){ e.textContent=t; e.hidden=!t; } }); }
+  function fout(t){ if(t) logb('melding: '+t); ui(function(){ var e=document.getElementById('lgErr'); if(e){ e.textContent=t; e.hidden=!t; } }); }
+  function logb(t){ try{ var L=JSON.parse(localStorage.getItem('planner.authlog')||'[]'); L.push(new Date().toLocaleTimeString('nl-NL')+'  '+t); while(L.length>25) L.shift(); localStorage.setItem('planner.authlog',JSON.stringify(L)); }catch(e){} ui(toonLog); }
+  function toonLog(){ var el=document.getElementById('lgLog'); if(!el) return; var L=[]; try{ L=JSON.parse(localStorage.getItem('planner.authlog')||'[]'); }catch(e){} el.textContent=L.join('\n')||'(nog niets)'; }
+  window.csLog=logb;
+  logb('start · '+navigator.userAgent.replace(/^Mozilla\/5\.0 /,'').slice(0,120)+' · cookies '+(navigator.cookieEnabled?'aan':'uit')+' · '+(window.matchMedia&&matchMedia('(display-mode: standalone)').matches?'app':'browser'));
   function toon(on){ ui(function(){ var l=document.getElementById('login'); if(l) l.hidden=!on; document.documentElement.classList.toggle('uitgelogd',on); var b=document.getElementById('btnUit'); if(b) b.hidden=on; var bp=document.getElementById('btnPw'); if(bp) bp.hidden=on; }); }
   function wDoc(ref){ return {
     get:function(){ return ref.get(); },
@@ -43,6 +47,7 @@
   function isMsKantoor(u){ if(!u||!MSD) return false; if(u.email&&MSD.test(u.email)) return true; return (u.providerData||[]).some(function(x){ return x&&x.email&&MSD.test(x.email); }); }
   var eerst=true, klaar=false;
   auth.onAuthStateChanged(function(u){
+    logb('status: '+(u?('ingelogd '+(u.email||u.uid)+' via '+((u.providerData||[]).map(function(x){return x&&x.providerId;}).join(',')||'?')):'niet ingelogd'));
     if(u){
       var mail=String(u.email||'').toLowerCase();
       var isB=(LG.beheerder&&mail===String(LG.beheerder).toLowerCase())||isMsKantoor(u);
@@ -66,8 +71,9 @@
     if(!/^[^@\s]+@[^@\s]+[.][^@\s]{2,}$/.test(mail)){ fout('Vul een geldig e-mailadres in.'); return Promise.resolve(); }
     if(code.length<6){ fout('Het wachtwoord is minimaal 6 tekens.'); return Promise.resolve(); }
     fout('');
+    logb('e-mail inloggen: '+mail);
     return auth.signInWithEmailAndPassword(mail,code).catch(function(e){
-      var c=e&&e.code;
+      var c=e&&e.code; logb('e-mail fout: '+c);
       fout(c==='auth/unauthorized-domain'?'Dit adres mag niet inloggen. Open de app via '+APPURL
         :c==='auth/network-request-failed'?'Geen verbinding. Inloggen kan alleen online.'
         :c==='auth/too-many-requests'?'Te vaak geprobeerd. Wacht even en probeer opnieuw.'
@@ -106,18 +112,18 @@
     var prov=new firebase.auth.OAuthProvider('microsoft.com');
     prov.setCustomParameters({tenant:MS.tenant,prompt:'select_account'}); prov.addScope('email'); prov.addScope('profile');
     function msFout(e){ return 'Microsoft-inloggen mislukt ('+((e&&e.code)||'onbekend')+'). Probeer opnieuw.'; }
-    auth.getRedirectResult().catch(function(e){ fout(msFout(e)); });
+    auth.getRedirectResult().then(function(r){ if(r&&r.user) logb('omleiding gelukt: '+r.user.email); },function(e){ logb('omleiding fout: '+(e&&e.code)+' '+(e&&e.message||'').slice(0,160)); fout(msFout(e)); });
     ui(function(){
       var b=document.getElementById('lgMs'); if(!b) return; b.hidden=false;
-      b.addEventListener('click',function(){ fout(''); b.disabled=true; var t0=Date.now();
-        auth.signInWithPopup(prov).catch(function(e){ var c=e&&e.code;
+      b.addEventListener('click',function(){ fout(''); b.disabled=true; var t0=Date.now(); logb('Microsoft: pop-up starten via '+(cfg.authDomain||'?'));
+        auth.signInWithPopup(prov).then(function(r){ logb('pop-up gelukt: '+(r&&r.user&&r.user.email)); return r; }).catch(function(e){ var c=e&&e.code; logb('pop-up fout na '+Math.round((Date.now()-t0)/1000)+'s: '+c+' '+(e&&e.message||'').slice(0,160));
           if(c==='auth/cancelled-popup-request') return;
           if(c==='auth/popup-closed-by-user'){
             if(Date.now()-t0>4000) fout('Microsoft-inloggen is niet afgerond. Je browser blokkeert waarschijnlijk cookies van derden. Log in met je e-mailadres en wachtwoord.');
             return;
           }
           if(c==='auth/popup-blocked'||c==='auth/operation-not-supported-in-environment'){
-            return auth.signInWithRedirect(prov);
+            logb('terugval: omleiding'); return auth.signInWithRedirect(prov);
           }
           fout(msFout(e));
         }).then(function(){ b.disabled=false; },function(e){ b.disabled=false; fout(msFout(e)); });
@@ -451,7 +457,8 @@ th{background:#EB6608}
     <p class="lg-err" id="lgErr" hidden></p>
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note">Geen inlog? Vraag de beheerder om een account.</p>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 19:54</p>
+    <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:00</p>
   </form>
 </div>
 <style>
@@ -468,6 +475,7 @@ th{background:#EB6608}
 .lg-btn:disabled{opacity:.5}
 .lg-err{color:#B42318;font-size:13px;margin:8px 0 0}
 .lg-note{color:#717171;font-size:12px;margin:12px 0 0;text-align:center}
+.lg-diag{margin-top:10px;font-size:11px;color:#717171}.lg-diag summary{cursor:pointer;text-align:center}.lg-diag pre{white-space:pre-wrap;word-break:break-word;background:#FAF8F6;border:1px solid #EEE8E2;border-radius:6px;padding:8px;max-height:220px;overflow:auto;font-size:10.5px;line-height:1.35;margin:6px 0}.lg-diag-b{font-size:11px;padding:4px 10px;border:1px solid #D3CAC2;border-radius:6px;background:#fff;cursor:pointer}
 .lg-ver{color:#A8A39D;font-size:11px;margin:6px 0 0;text-align:center;letter-spacing:.04em}
 html.uitgelogd body{overflow:hidden}
 </style>
