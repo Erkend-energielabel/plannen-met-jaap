@@ -205,6 +205,9 @@ body.full header.top,body.full .rule,body.full nav.tabs,body.full #dayinfo,body.
 .grip:active{color:#EB6608}
 .lab .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;outline:none;padding:2px 3px;border-radius:4px}
 .lab .nm:focus{background:var(--field);box-shadow:0 0 0 2px var(--accent);white-space:normal;overflow:visible}
+.lab input.nm{border:0;background:transparent;font:inherit;font-size:13px;color:inherit;min-width:0;width:100%}
+.lab input.nm:focus{background:var(--field);box-shadow:0 0 0 2px var(--accent);outline:none}
+.lab input.nm:read-only{background:transparent;box-shadow:none}
 .lab .sw{position:relative;width:18px;height:18px;border-radius:4px;flex:none;border:1px solid rgba(0,0,0,.15)}
 .lab .sw select{position:absolute;inset:0;opacity:0;width:100%;height:100%;min-height:0;padding:0;cursor:pointer}
 .lab .ed{border:0;background:none;color:var(--muted);font-size:14px;padding:4px;flex:none}
@@ -464,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:46</p>
+    <p class="lg-ver" id="lgVer">versie 25-11-2026 20:49</p>
   </form>
 </div>
 <style>
@@ -1093,6 +1096,7 @@ function bindLwGrip(){
 }
 function lockUitv(a){
   a.querySelectorAll('[contenteditable="true"]').forEach(function(x){ x.setAttribute('contenteditable','false'); });
+  a.querySelectorAll('.lab input.nm').forEach(function(x){ x.readOnly=true; });
   a.querySelectorAll('.lab select,.lab .stin').forEach(function(x){ x.disabled=true; });
 }
 function fitGrid(){
@@ -1174,7 +1178,7 @@ function viewPlanning(){
     return '<div class="row task" data-row="'+t.id+'"><div class="lab" title="'+esc(t.name+(who?' · '+who.name:'')+(d?' · '+d.name:''))+'">'+
       '<input type="checkbox" data-chk="'+t.id+'"'+(V.chk.indexOf(t.id)>=0?' checked':'')+' aria-label="Selecteer">'+
       '<span class="nr">'+nr+'</span><span class="grip" data-grip="'+t.id+'" title="Sleep om de regel te verplaatsen">☰</span>'+
-      '<span class="nm" contenteditable="true" spellcheck="false" data-rn="'+t.id+'">'+esc(t.name)+'</span>'+
+      '<input class="nm" type="text" autocomplete="off" autocapitalize="sentences" enterkeyhint="done" data-rn="'+t.id+'" value="'+esc(t.name)+'" aria-label="Naam activiteit">'+
       '<span class="sw" style="'+(d?'background:'+esc(colorOf(t)):'background:transparent;box-shadow:inset 0 0 0 2px var(--ink)')+'" title="Vakgebied: '+esc(d?d.name:'geen')+'"><select data-disc="'+t.id+'" aria-label="Vakgebied">'+opts+'</select></span>'+
       '<button type="button" class="ed" data-edit="'+t.id+'" aria-label="Bewerken" title="Bewerken">✎</button>'+
       '<button type="button" class="xdel'+(V.armed==='t'+t.id?' armed':'')+'" data-deltask="'+t.id+'" aria-label="Taak verwijderen" title="'+(V.armed==='t'+t.id?'Nog een keer tikken om te verwijderen':'Taak verwijderen')+'">'+(V.armed==='t'+t.id?'✓?':'×')+'</button>'+
@@ -1856,8 +1860,8 @@ document.addEventListener('change',function(e){
 });
 document.addEventListener('focusout',function(e){
   var el=e.target; if(!el||!el.getAttribute) return;
-  var nv=(el.textContent||'').replace(/\s+/g,' ').trim();
-  if(el.getAttribute('data-rn')!==null){ var tk=T(el.getAttribute('data-rn')); if(!tk) return; if(nv&&nv!==tk.name) mut(function(){tk.name=nv;}); else el.textContent=tk.name; return; }
+  var isIn=el.tagName==='INPUT', nv=(isIn?el.value:(el.textContent||'')).replace(/\s+/g,' ').trim();
+  if(el.getAttribute('data-rn')!==null){ var tk=T(el.getAttribute('data-rn')); if(!tk) return; if(nv&&nv!==tk.name) mut(function(){tk.name=nv;}); else { if(isIn) el.value=tk.name; else el.textContent=tk.name; } return; }
   if(el.getAttribute('data-rch')!==null){ var ch=chapOf(el.getAttribute('data-rch')); if(!ch) return; if(nv&&nv!==ch.name) mut(function(){ch.name=nv;}); else el.textContent=ch.name; }
 });
 document.addEventListener('keydown',function(e){
