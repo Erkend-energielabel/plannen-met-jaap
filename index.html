@@ -367,6 +367,9 @@ body[data-role="projectleider"] [data-a="clear"],body[data-role="projectleider"]
 .ulist{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
 .uitem{display:flex;align-items:stretch;gap:0;background:color-mix(in srgb,var(--c) 9%,var(--surface));border:3px solid var(--c);border-left-width:10px;border-radius:10px;position:relative;overflow:visible}
 .uitem.nod{background:var(--surface)}
+.uhn{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:84px;max-width:45%;padding:6px 12px;margin:8px 8px 8px 0;border-radius:8px;background:#fff;border:2px solid var(--c);color:#111;font:800 30px/1.05 var(--display,inherit);text-align:center;word-break:break-word}
+.uhn small{font:700 10px/1 var(--body,inherit);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+@media (max-width:500px){.uhn{font-size:24px;min-width:64px}}
 .udisc{display:inline-block;align-self:flex-start;margin:0 0 4px;padding:2px 10px;border-radius:999px;background:var(--c);color:#fff;font-size:12px;font-weight:700;letter-spacing:.02em;text-shadow:0 1px 1px rgba(0,0,0,.3)}
 .uitem .ubody{display:flex;flex-direction:column}
 .uitem.done{opacity:.75}
@@ -1356,7 +1359,8 @@ function uItem(t,ds,nr,showDate){
   var v=t.days[ds], o=(v&&typeof v==='object')?v:{}, done=isD(v), loc=dLoc(t,ds), col=colorOf(t), d=disc(t.disc);
   var h='<div class="uitem'+(done?' done':'')+(d?'':' nod')+'" style="--c:'+esc(d?col:'#1A1A1A')+'">';
   h+='<button type="button" class="utick" data-utick="'+t.id+'|'+ds+'" aria-pressed="'+done+'" aria-label="'+(done?'Afvinken ongedaan maken':'Afvinken')+'">'+(done?'✓':'')+'</button>';
-  h+='<button type="button" class="ubody" data-upost="'+t.id+'|'+ds+'">'+(d?'<span class="udisc">'+esc(d.name)+'</span>':'<span class="udisc">Geen vakgebied</span>')+'<span class="unm">'+nr+'. '+esc(t.name)+'</span><span class="umeta">'+(showDate?esc(shortD(ds))+' · ':'')+dHrs(t,ds)+' uur'+(loc?' · '+esc(loc):'')+'</span>'+(o.o?'<span class="unote">'+esc(o.o)+'</span>':'')+'</button>';
+  h+='<button type="button" class="ubody" data-upost="'+t.id+'|'+ds+'">'+(d?'<span class="udisc">'+esc(d.name)+'</span>':'<span class="udisc">Geen vakgebied</span>')+'<span class="unm">'+nr+'. '+esc(t.name)+'</span><span class="umeta">'+(showDate?esc(shortD(ds))+' · ':'')+dHrs(t,ds)+' uur'+(dPart(t,ds)?' · '+(dPart(t,ds)==='o'?'ochtend':'middag'):'')+'</span>'+(o.o?'<span class="unote">'+esc(o.o)+'</span>':'')+'</button>';
+  if(loc) h+='<span class="uhn" title="Huisnummer / adres"><small>Nr.</small>'+esc(loc)+'</span>';
   if(o.s) h+='<span class="ustk '+esc(o.s)+'">!</span>';
   return h+'</div>';
 }
