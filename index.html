@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:32</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:34</p>
   </form>
 </div>
 <style>
@@ -1862,7 +1862,7 @@ app.addEventListener('pointerdown',function(e){
   if(!blk&&!cells) return;
   var gg=geo(); if(!gg) return;
   var tid=(blk||cells).getAttribute('data-t');
-  if(blk&&V.mode==='normal'){ var bk=tid+'|'+blk.getAttribute('data-d')+'|'+blk.getAttribute('data-r'), nT=Date.now(), bp=V.btap;
+  if(blk&&V.mode==='normal'&&V.edit!==false){ var bk=tid+'|'+blk.getAttribute('data-d')+'|'+blk.getAttribute('data-r'), nT=Date.now(), bp=V.btap;
     var cnt=(bp&&bp.k===bk&&nT-bp.t<700)?bp.n+1:1; V.btap={k:bk,t:nT,n:cnt};
     if(cnt>=3){ V.btap=null; G={k:'move',tid:tid,ds:blk.getAttribute('data-d'),r:+blk.getAttribute('data-r'),x0:e.clientX,geo:gg,dd:0,moved:false,tri:true}; cap(e); e.preventDefault(); return; } }
   if(V.bclip){ G={k:'bpaste',tid:tid,geo:gg,x0:e.clientX,y0:e.clientY,moved:false}; return; }
@@ -1877,7 +1877,7 @@ app.addEventListener('pointerdown',function(e){
   if(blk&&V.mode==='move'&&e.shiftKey){ var tk0=T(tid); if(tk0){ runs(tk0).forEach(function(run){ var kk0=tk0.id+'|'+run[0]; if(V.rsel.indexOf(kk0)<0) V.rsel.push(kk0); }); render(); } e.preventDefault(); return; }
   if(blk&&V.mode==='move'){ var side=t.closest('.hd'); G={k:side?'resize':'move',side:side?side.getAttribute('data-side'):null,tid:tid,ds:blk.getAttribute('data-d'),r:+blk.getAttribute('data-r'),x0:e.clientX,geo:gg,dd:0,moved:false}; cap(e); e.preventDefault(); return; }
   G={k:'tap',tid:tid,geo:gg,x0:e.clientX,y0:e.clientY,moved:false};
-  if(V.mode==='normal'&&!V.tclip){ var tg=G, tds=F(gg.C[colAt(gg,e.clientX)]); tg.timer=setTimeout(function(){ if(G!==tg||tg.moved) return; G=null; mut(function(){ var tk=T(tg.tid); if(tk&&!(tds in tk.days)&&!hardOff(tk,tds)) tk.days[tds]=0; },'balk gezet'); if(navigator.vibrate) navigator.vibrate(40); },2000); }
+  if(V.mode==='normal'&&!V.tclip&&V.edit!==false){ var tg=G, tds=F(gg.C[colAt(gg,e.clientX)]); tg.timer=setTimeout(function(){ if(G!==tg||tg.moved) return; G=null; mut(function(){ var tk=T(tg.tid); if(tk&&!(tds in tk.days)&&!hardOff(tk,tds)) tk.days[tds]=0; },'balk gezet'); if(navigator.vibrate) navigator.vibrate(40); },2000); }
 });
 app.addEventListener('pointermove',function(e){
   if(!G) return;
@@ -1897,7 +1897,7 @@ app.addEventListener('pointerup',function(e){
   if(g.k==='row'){ hideDrop(); g.el.style.opacity=''; g.el.style.transform=''; g.el.style.zIndex=''; if(g.moved) mut(function(){moveRow(g.id,e.clientY);}); return; }
   if(g.k==='dtap'){ clearTimeout(g.timer); openEdit(g.tid); return; }
   if(g.k==='erase'||g.k==='draw'){ if(!g.changed) UNDO.pop(); else { normAll(); S.demo=false; logAct(g.k==='draw'?'vakje gekleurd':'vakje gewist'); save(); } render(); return; }
-  if(g.k==='tick'){ clearTimeout(g.timer); if(g.moved) return; if(V.mode==='postit'){ openPostit(g.tid,g.ds,g.r); return; } return; }
+  if(g.k==='tick'){ clearTimeout(g.timer); if(g.moved) return; if(V.mode==='postit'){ openPostit(g.tid,g.ds,g.r); return; } if(V.edit===false){ mut(function(){ var t=T(g.tid); if(t&&(g.ds in t.days)) setD(t,g.ds,!isD(t.days[g.ds])); },'afgevinkt'); } return; }
   if(g.k==='bpaste'){ if(!g.moved){ var ci2=colAt(g.geo,e.clientX); askPaste(g.tid,g.geo.C[ci2]); } return; }
   if(g.k==='tap'){ clearTimeout(g.timer); if(!g.moved&&V.tclip){ var ci=colAt(g.geo,e.clientX); mut(function(){pasteRows(g.tid,g.geo.C[ci]);}); } return; }
   if(g.k==='move'){
