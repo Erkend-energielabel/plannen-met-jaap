@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 09:25</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 09:30</p>
   </form>
 </div>
 <style>
@@ -1191,7 +1191,8 @@ function viewPlanning(){
   h+='<div class="spacer"></div><button class="btn" type="button" data-bedit="1" '+(n?'':'disabled')+'>✎ Bewerk</button><button class="btn" type="button" data-bcopy="1" '+(n?'':'disabled')+'>⧉ Kopie</button><button class="btn danger'+(V.armed==='bdel'?' armed':'')+'" type="button" data-bdel="1" '+(n?'':'disabled')+'>🗑 '+(V.armed==='bdel'?'Zeker? ('+n+')':'Verwijder')+'</button></div>';
   h+='<details class="mobmore"'+(window.innerWidth>=700?' open':'')+'><summary>Meer opties</summary><div class="mobbody">';
   h+='<div class="tools hideful">'+periodTools()+'</div><div class="tools">'+'<div class="seg" role="group" aria-label="Breedte activiteiten">'+'<button type="button" data-lw="100" title="Standaardbreedte">↺ Standaard</button></div>'+'<div class="seg" role="group" aria-label="Zoom">'+[100,90,80,70,60,50].map(function(z){return '<button type="button" data-zoom="'+z+'" aria-pressed="'+(V.zoom===z)+'">'+z+'%</button>';}).join('')+'</div></div>'+'</div></div></details>';
-  if(V.mode==='move') h+='<div class="tools pastebar">'+(V.rsel.length?'<b>'+V.rsel.length+' stuk(ken) geselecteerd</b><div class="seg"><button type="button" data-rs="-5">◀ week</button><button type="button" data-rs="-1">◀ dag</button><button type="button" data-rs="1">dag ▶</button><button type="button" data-rs="5">week ▶</button></div><button class="btn" type="button" data-rsclear="1">✕ Wis selectie</button>':'<span style="color:var(--muted)">Tik op balken om ze te selecteren (oranje rand). Sleep daarna één ervan, of gebruik de pijlen, om ze samen te verplaatsen.</span>')+'</div>';
+  if(V.mode==='move') h+='<div class="tools pastebar">'+(V.rsel.length?'<b>'+V.rsel.length+' stuk(ken) geselecteerd</b><div class="seg"><button type="button" data-rs="-5">◀ week</button><button type="button" data-rs="-1">◀ dag</button><button type="button" data-rs="1">dag ▶</button><button type="button" data-rs="5">week ▶</button></div><button class="btn" type="button" data-bcopysel="1">📋 Kopiëren</button><button class="btn" type="button" data-rsall="1">Hele regel(s)</button><button class="btn" type="button" data-rsclear="1">✕ Wis selectie</button>':'<span style="color:var(--muted)">Tik op balken om ze te selecteren (oranje rand). Shift + klik selecteert alle balken van die regel. Sleep daarna, gebruik de pijlen, of kies Kopiëren.</span>')+'</div>';
+  if(V.bclip) h+='<div class="tools pastebar"><b>'+V.bclip.n+' dag(en) gekopieerd.</b><span style="color:var(--muted)">'+(V.bclip.one?'Tik op de dag en regel waar de eerste dag moet komen.':'Tik op de dag waar de eerste dag moet komen; ze blijven op hun eigen regels.')+' Je kunt vaker plakken.</span><button class="btn" type="button" data-bclear="1">✓ Klaar</button></div>';
   if(V.tclip) h+='<div class="tools pastebar"><b>'+V.tclip.length+' regel(s) gekopieerd.</b><span style="color:var(--muted)">Tik in de planning op de dag en regel waar ze moeten komen.</span><button class="btn" type="button" data-tclear="1">✓ Klaar</button></div>';
   if(V.expMsg) h+='<p class="hint">'+esc(V.expMsg)+'</p>';
   var hint={normal:'Tik op een blokje om de dag af te vinken. Houd een blokje even vast om er tekst in te zetten, of uren of een sticker. Vegen scrolt de planning. Wil je blokjes verschuiven of langer maken, zet dan ↔ Verplaatsen aan.',postit:'Tekst/sticker: tik op een blokje om er tekst in te zetten (bijv. een huisnummer), of uren, een sticker of een notitie. Bij Toepassen op kies je of het voor één dag, het hele stuk of de hele taak geldt. Tik nog eens op de knop om te stoppen.',weather:'Onwerkbaar weer: tik bovenin op een dag om hem als onwerkbaar aan of uit te vinken. De planning schuift niet op; de dag wordt alleen geregistreerd. Tik nog eens op de knop om te stoppen.',free:'Vrije dag: tik bovenin op een dag om hem als vrije dag aan of uit te vinken. De werkdagen die erop vallen schuiven op. Tik nog eens op de knop om te stoppen.',move:'Verplaatsen: sleep een blokje om dat stuk te verschuiven, sleep de streepjes aan de zijkant om het langer of korter te maken. Aangevinkte regels schuiven samen op. Zet daarna Normaal weer aan.',draw:'Tekenen: tik of trek met je pen over een regel om dagen in te plannen. Tik op een bestaand blokje om het te openen. Zet Normaal aan om weer te scrollen.',erase:'Gum: tik of veeg over blokjes om ze weg te halen. Zet Normaal aan om weer te scrollen.'}[V.mode];
@@ -1677,6 +1678,24 @@ function applyResize(g){
     else { for(i=0;i<Math.min(dd,run.length-1);i++) delete t.days[run[i]]; }
   }
 }
+function copySel(){
+  var items=[], base=null, n=0, tids={};
+  V.rsel.forEach(function(key){ var p=key.split('|'), t=T(p[0]); if(!t) return;
+    runs(t).forEach(function(run){ if(run[0]!==p[1]) return; run.forEach(function(ds){ items.push({tid:t.id,ds:ds,v:JSON.parse(JSON.stringify(t.days[ds]))}); tids[t.id]=1; n++; if(!base||ds<base) base=ds; }); });
+  });
+  if(!n) return; V.bclip={items:items,base:base,n:n,one:Object.keys(tids).length===1};
+  if(navigator.clipboard){ try{ navigator.clipboard.writeText(items.map(function(x){ var t=T(x.tid); return x.ds+'\t'+(t?t.name:''); }).join('\n')); }catch(e){} }
+}
+function pasteSel(tid,ms){
+  var c=V.bclip; if(!c) return; var start=isWE(ms)?nextWd(ms):ms, cnt=0;
+  c.items.forEach(function(x){
+    var t=T(c.one?tid:x.tid); if(!t) return;
+    var nd=F(shiftWd(start,wdDiff(P(c.base),P(x.ds))));
+    if(nd in t.days||hardOff(t,nd)) return;
+    t.days[nd]=fresh(x.v); cnt++;
+  });
+  return cnt;
+}
 function pasteRows(tid,ms){
   var tgt=T(tid); if(!tgt||!V.tclip) return;
   var base=null; V.tclip.forEach(function(c){ var s=tStart(c); if(s&&(!base||s<base)) base=s; });
@@ -1729,6 +1748,7 @@ app.addEventListener('pointerdown',function(e){
   if(blk&&V.mode==='normal'){ var bk=tid+'|'+blk.getAttribute('data-d')+'|'+blk.getAttribute('data-r'), nT=Date.now(), bp=V.btap;
     var cnt=(bp&&bp.k===bk&&nT-bp.t<700)?bp.n+1:1; V.btap={k:bk,t:nT,n:cnt};
     if(cnt>=3){ V.btap=null; G={k:'move',tid:tid,ds:blk.getAttribute('data-d'),r:+blk.getAttribute('data-r'),x0:e.clientX,geo:gg,dd:0,moved:false,tri:true}; cap(e); e.preventDefault(); return; } }
+  if(V.bclip){ G={k:'bpaste',tid:tid,geo:gg,x0:e.clientX,y0:e.clientY,moved:false}; return; }
   if(V.mode==='erase'){ snap(); G={k:'erase',geo:gg}; eraseAt(e.clientX,e.clientY); cap(e); e.preventDefault(); return; }
   if(V.mode==='draw'&&blk){ var dt={k:'dtap',tid:tid,geo:gg,x0:e.clientX,y0:e.clientY,c0:colAt(gg,e.clientX)}; G=dt; dt.timer=setTimeout(function(){ if(G===dt){ G=null; openEdit(dt.tid); } },400); cap(e); e.preventDefault(); return; }
   if(V.mode==='draw'){ var c0=colAt(gg,e.clientX), nowT=Date.now(), pv=V.dtap; V.dtap={t:nowT,tid:tid,c:c0};
@@ -1737,6 +1757,7 @@ app.addEventListener('pointerdown',function(e){
   if(blk&&(V.mode==='normal'||V.mode==='postit')){ var gg2={k:'tick',tid:tid,ds:blk.getAttribute('data-d'),r:+blk.getAttribute('data-r'),x0:e.clientX,y0:e.clientY,moved:false}; G=gg2;
     if(V.mode==='normal') gg2.timer=setTimeout(function(){ if(G===gg2&&!gg2.moved){ G=null; openPostit(gg2.tid,gg2.ds,gg2.r); if(navigator.vibrate) navigator.vibrate(40); } },2000);
     return; }
+  if(blk&&V.mode==='move'&&e.shiftKey){ var tk0=T(tid); if(tk0){ runs(tk0).forEach(function(run){ var kk0=tk0.id+'|'+run[0]; if(V.rsel.indexOf(kk0)<0) V.rsel.push(kk0); }); render(); } e.preventDefault(); return; }
   if(blk&&V.mode==='move'){ var side=t.closest('.hd'); G={k:side?'resize':'move',side:side?side.getAttribute('data-side'):null,tid:tid,ds:blk.getAttribute('data-d'),r:+blk.getAttribute('data-r'),x0:e.clientX,geo:gg,dd:0,moved:false}; cap(e); e.preventDefault(); return; }
   G={k:'tap',tid:tid,geo:gg,x0:e.clientX,y0:e.clientY,moved:false};
   if(V.mode==='normal'&&!V.tclip){ var tg=G, tds=F(gg.C[colAt(gg,e.clientX)]); tg.timer=setTimeout(function(){ if(G!==tg||tg.moved) return; G=null; mut(function(){ var tk=T(tg.tid); if(tk&&!(tds in tk.days)&&!hardOff(tk,tds)) tk.days[tds]=0; },'balk gezet'); if(navigator.vibrate) navigator.vibrate(40); },2000); }
@@ -1744,6 +1765,7 @@ app.addEventListener('pointerdown',function(e){
 app.addEventListener('pointermove',function(e){
   if(!G) return;
   if(G.k==='tick'){ if(Math.abs(e.clientX-G.x0)>8||Math.abs(e.clientY-G.y0)>8){ G.moved=true; clearTimeout(G.timer); } return; }
+  if(G.k==='bpaste'){ if(Math.abs(e.clientX-G.x0)>8||Math.abs(e.clientY-G.y0)>8) G.moved=true; return; }
   if(G.k==='tap'){ if(Math.abs(e.clientX-G.x0)>8||Math.abs(e.clientY-G.y0)>8){ G.moved=true; clearTimeout(G.timer); } return; }
   if(G.k==='row'){ if(Math.abs(e.clientY-G.y0)>4){ G.moved=true; G.el.style.opacity='.4'; G.el.style.transform='translateY('+(e.clientY-G.y0)+'px)'; G.el.style.position='relative'; G.el.style.zIndex='9'; dropLine(e.clientY,G.id); autoScroll(e.clientY); } return; }
   if(G.k==='erase'){ eraseAt(e.clientX,e.clientY); return; }
@@ -1759,6 +1781,7 @@ app.addEventListener('pointerup',function(e){
   if(g.k==='dtap'){ clearTimeout(g.timer); openEdit(g.tid); return; }
   if(g.k==='erase'||g.k==='draw'){ if(!g.changed) UNDO.pop(); else { normAll(); S.demo=false; logAct(g.k==='draw'?'vakje gekleurd':'vakje gewist'); save(); } render(); return; }
   if(g.k==='tick'){ clearTimeout(g.timer); if(g.moved) return; if(V.mode==='postit'){ openPostit(g.tid,g.ds,g.r); return; } return; }
+  if(g.k==='bpaste'){ if(!g.moved){ var ci2=colAt(g.geo,e.clientX); mut(function(){ pasteSel(g.tid,g.geo.C[ci2]); },'balken geplakt'); } return; }
   if(g.k==='tap'){ clearTimeout(g.timer); if(!g.moved&&V.tclip){ var ci=colAt(g.geo,e.clientX); mut(function(){pasteRows(g.tid,g.geo.C[ci]);}); } return; }
   if(g.k==='move'){
     if(g.tri&&!g.moved){ render(); return; }
@@ -1845,6 +1868,9 @@ document.addEventListener('click',function(e){
   if(V.mode==='weather'&&(el=t.closest('[data-wday]'))){ var wds=el.getAttribute('data-wday'), msg=''; mut(function(){ msg=toggleWeather(wds); }); if(msg){ V.expMsg=msg; render(); } return; }
   if((el=t.closest('[data-rs]'))){ var n5=+el.getAttribute('data-rs'); mut(function(){shiftRsel(n5);}); return; }
   if(t.closest('[data-rsclear]')){ V.rsel=[]; render(); return; }
+  if(t.closest('[data-bcopysel]')){ copySel(); render(); return; }
+  if(t.closest('[data-bclear]')){ V.bclip=null; render(); return; }
+  if(t.closest('[data-rsall]')){ var tsel={}; V.rsel.forEach(function(k){ tsel[k.split('|')[0]]=1; }); Object.keys(tsel).forEach(function(id){ var tt=T(id); if(tt) runs(tt).forEach(function(run){ var kk=id+'|'+run[0]; if(V.rsel.indexOf(kk)<0) V.rsel.push(kk); }); }); render(); return; }
   if(t.closest('[data-tclear]')){ V.tclip=null; render(); return; }
   if(t.closest('[data-bdel]')){ if(V.armed==='bdel'){ var del=V.chk.slice(); V.armed=null; V.chk=[]; mut(function(){ S.tasks=S.tasks.filter(function(x){return del.indexOf(x.id)<0;}); }); } else { V.armed='bdel'; render(); } return; }
   if((el=t.closest('[data-exp]'))){ doExport(el.getAttribute('data-exp')); return; }
@@ -1927,7 +1953,8 @@ document.addEventListener('focusout',function(e){
 document.addEventListener('keydown',function(e){
   var t=e.target, typing=t&&t.closest&&t.closest('input,textarea,select,[contenteditable="true"]');
   if(e.key==='Enter'&&t&&t.getAttribute&&(t.getAttribute('data-rn')!==null||t.getAttribute('data-rch')!==null)){ e.preventDefault(); t.blur(); return; }
-  if(e.key==='Escape'){ closeModal(); return; }
+  if(e.key==='Escape'){ if(!document.getElementById('modal').innerHTML&&V.bclip){ V.bclip=null; render(); return; } closeModal(); return; }
+  if(!typing&&(e.metaKey||e.ctrlKey)&&(e.key==='c'||e.key==='C')&&V.rsel.length){ e.preventDefault(); copySel(); render(); return; }
   if(!typing&&(e.metaKey||e.ctrlKey)&&(e.key==='z'||e.key==='Z')){ e.preventDefault(); if(e.shiftKey) redo(); else undo(); }
 });
 document.addEventListener('pointerover',function(e){ var dn=e.target.closest&&e.target.closest('[data-dn]'); if(dn) document.getElementById('dayinfo').textContent=dn.getAttribute('data-dn'); });
