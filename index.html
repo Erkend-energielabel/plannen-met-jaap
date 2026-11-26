@@ -490,7 +490,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 19:20</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 19:22</p>
   </form>
 </div>
 <style>
@@ -1524,7 +1524,9 @@ function openSpeak(){
     +'<li>Tik op <b>Zet in planning</b>. Elke activiteit krijgt een eigen regel; weekenden worden overgeslagen.</li></ol>'
     +'<div style="margin-top:8px"><b>Voorbeeld:</b> <i>“dag één vloer afdekken, dag twee cv-ketel weghalen, dag drie cv-ketel vullen, dag vier tot zes radiatoren weghalen, dag zeven meterkast timmeren”</i></div>'
     +'<div class="hint" style="margin:6px 0 0">Meerdere dagen: zeg “dag vier tot zes” of “dag vier tot en met zes”.</div></div>';
-  h+='<div class="f" style="grid-template-columns:1fr 1fr;margin-bottom:12px"><label>Dag 1 is<input type="date" id="sp_d" value="'+F(st)+'" style="font-size:17px"></label><label>Huisnummer (mag leeg)<input type="text" id="sp_l" placeholder="bijv. 44" style="font-size:17px"></label></div>';
+  h+='<div class="f" style="grid-template-columns:1fr 1fr;margin-bottom:12px"><label>Dag 1 is<input type="date" id="sp_d" value="'+F(st)+'" style="font-size:17px"></label><label>Huisnummer (mag leeg)<input type="text" id="sp_l" placeholder="bijv. 44" style="font-size:17px"></label>'
+    +'<label>Hoofdstuk<select id="sp_ch" style="font-size:17px;min-height:48px"><option value="__new" selected>➕ Nieuw hoofdstuk</option>'+S.chapters.filter(function(c){return c.projectId===p.id;}).map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join('')+'<option value="">Geen hoofdstuk (bovenaan)</option></select></label>'
+    +'<label id="sp_chn_w">Naam nieuw hoofdstuk<input type="text" id="sp_chn" value="Nieuw hoofdstuk" style="font-size:17px"></label></div>';
   h+='<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;flex-wrap:wrap"><button class="btn primary" type="button" id="sp_mic" style="font-size:20px;padding:14px 26px;min-height:56px">🎤 Start inspreken</button><span id="sp_st" style="font-size:15px;font-weight:600;color:#B42318"></span></div>';
   h+='<label style="display:block">Wat je zei — je kunt het hier ook typen of verbeteren<textarea id="sp_tx" rows="5" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;font-size:17px;line-height:1.4"></textarea></label>';
   h+='<div id="sp_prev" style="margin-top:12px;font-size:16px;border-top:1px solid var(--line2);padding-top:10px"></div>';
@@ -1537,6 +1539,10 @@ function openSpeak(){
     $('sp_prev').innerHTML=L.length?'<b style="font-size:17px">Dit komt in de planning ('+L.length+' regel'+(L.length===1?'':'s')+'):</b>'+L.map(function(x){ var a=dayDate(d0,x.days[0]), b=dayDate(d0,x.days[x.days.length-1]); return '<div style="margin:3px 0">Dag '+x.days[0]+(x.days.length>1?'–'+x.days[x.days.length-1]:'')+' · '+esc(fullD(a)).split(' ').slice(0,3).join(' ')+(x.days.length>1?' t/m '+esc(fullD(b)).split(' ').slice(0,3).join(' '):'')+' · <b>'+esc(x.name)+'</b></div>'; }).join(''):'<span class="hint" style="font-size:15px">Hier zie je straks wat er in de planning komt. Nog niets herkend: begin elk onderdeel met “dag” en een nummer.</span>';
     $('sp_ok').disabled=!L.length; };
   ['sp_tx','sp_d'].forEach(function(id){ $(id).addEventListener('input',upd); });
+  var chnTouched=false;
+  $('sp_chn').addEventListener('input',function(){ chnTouched=true; });
+  $('sp_l').addEventListener('input',function(){ if(!chnTouched){ var l=$('sp_l').value.trim(); $('sp_chn').value=l?'Woning '+l:'Nieuw hoofdstuk'; } });
+  $('sp_ch').addEventListener('change',function(){ $('sp_chn_w').hidden=$('sp_ch').value!=='__new'; });
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition, mic=$('sp_mic');
   if(SR){ var rec=new SR(), on=false, base=''; rec.lang='nl-NL'; rec.continuous=true; rec.interimResults=true;
     var stop=function(){ on=false; mic.textContent='🎤 Start inspreken'; $('sp_st').textContent=''; };
@@ -1551,11 +1557,14 @@ function openSpeak(){
   $('ov').addEventListener('click',function(e){ if(e.target.id==='ov') closeModal(); });
   $('frm').addEventListener('submit',function(e){ e.preventDefault(); var L=plan(); if(!L.length) return;
     try{ localStorage.setItem('bouwplanner.spkseen','1'); }catch(x){} var d0=P($('sp_d').value||F(st)), lbl=$('sp_l').value.trim();
+    var chSel=$('sp_ch').value, chName=$('sp_chn').value.trim()||'Nieuw hoofdstuk';
     closeModal();
     mut(function(){ var mx=-1; S.tasks.forEach(function(t){ if(t.projectId===p.id&&t.ord!=null&&t.ord>mx) mx=t.ord; });
+      var chId=chSel;
+      if(chSel==='__new'){ var ex=S.chapters.filter(function(c){return c.projectId===p.id&&c.name.trim().toLowerCase()===chName.toLowerCase();})[0]; if(ex) chId=ex.id; else { chId=uid(); S.chapters.push({id:chId,projectId:p.id,name:chName}); } }
       L.forEach(function(x){ var nm=x.name.toLowerCase();
-        var t=S.tasks.filter(function(q){return q.projectId===p.id&&(q.name||'').trim().toLowerCase()===nm;})[0];
-        if(!t){ t={id:uid(),projectId:p.id,chap:'',name:x.name,personId:'',disc:guessDisc(x.name),perDay:8,note:'',days:{},thruHol:false,ms:'',ord:++mx}; S.tasks.push(t); }
+        var t=S.tasks.filter(function(q){return q.projectId===p.id&&(q.chap||'')===chId&&(q.name||'').trim().toLowerCase()===nm;})[0];
+        if(!t){ t={id:uid(),projectId:p.id,chap:chId,name:x.name,personId:'',disc:guessDisc(x.name),perDay:8,note:'',days:{},thruHol:false,ms:'',ord:++mx}; S.tasks.push(t); }
         x.days.forEach(function(n){ var k=F(dayDate(d0,n)); if(!(k in t.days)) t.days[k]=lbl?{d:0,l:lbl}:0; else if(lbl) setLbl(t,k,lbl); });
       });
       renumber(p.id); },'planning ingesproken');
