@@ -377,6 +377,8 @@ body[data-role="projectleider"] [data-a="clear"],body[data-role="projectleider"]
 .ulist{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
 .uitem{display:flex;align-items:stretch;gap:0;background:color-mix(in srgb,var(--c) 9%,var(--surface));border:3px solid var(--c);border-left-width:10px;border-radius:10px;position:relative;overflow:visible}
 .uitem.nod{background:var(--surface)}
+.row.task .lab{-webkit-touch-callout:none}
+.row.task .lab.lphold{box-shadow:inset 0 0 0 3px #EB6608;transition:box-shadow 1.7s}
 .uitem.nolock .utick{opacity:.35;cursor:not-allowed}
 .uchg{display:inline-block;vertical-align:2px;padding:2px 8px;border-radius:4px;font:800 11px/1.3 var(--body,inherit);letter-spacing:.06em;color:#fff;background:#B42318;margin-right:4px}
 .uchg.aangepast{background:#EB6608}
@@ -490,7 +492,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 19:22</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 19:27</p>
   </form>
 </div>
 <style>
@@ -1589,7 +1591,8 @@ function openEdit(id,chapPreset){
   h+='<label>Einde<input type="text" id="e_end" value="" readonly tabindex="-1" style="background:var(--soft)"></label>';
   h+='<label class="chk w2"><input type="checkbox" id="e_thru"'+(o.thruHol?' checked':'')+'> Doorlopen tijdens vrije dagen</label><label class="chk"><input type="checkbox" id="e_onw"'+(o.thruOnw?' checked':'')+'> Uren tellen bij onwerkbaar weer</label>';
   h+='<label>Uren per dag<input type="number" id="e_pd" min="0" max="16" step="0.5" value="'+(+o.perDay||0)+'"></label>';
-  h+='<label>Mijlpaal ◆<input type="date" id="e_ms" value="'+esc(o.ms||'')+'"></label><label></label>';
+  var parts={}; for(var pk in (o.days||{})){ parts[dPart(o,pk)]=1; } var pkeys=Object.keys(parts), pcur=pkeys.length===1?pkeys[0]:(pkeys.length?'-':'');
+  h+='<label>Mijlpaal ◆<input type="date" id="e_ms" value="'+esc(o.ms||'')+'"></label><label>Deel van de dag<select id="e_part">'+(pcur==='-'?'<option value="-" selected>Per dag verschillend</option>':'')+'<option value=""'+(pcur===''?' selected':'')+'>Hele dagen</option><option value="o"'+(pcur==='o'?' selected':'')+'>Ochtend</option><option value="m"'+(pcur==='m'?' selected':'')+'>Middag</option></select></label>';
   h+='<label class="w">Notitie<textarea id="e_note">'+esc(o.note||'')+'</textarea></label></div>';
   if(t) h+='<div class="info"><span>Stickers: <b>'+tDone(t)+'/'+tCount(t)+' ('+tProg(t)+'%)</b></span><span>Uren: <b>'+tHours(t)+'</b></span><span>Status: <b>'+status(t)+'</b></span></div>';
   if(t&&runs(t).length>1) h+='<p class="hint">Deze taak bestaat uit '+runs(t).length+' losse stukken. Pas je begin of duur aan, dan wordt het één aaneengesloten stuk.</p>';
@@ -1624,6 +1627,7 @@ function openEdit(id,chapPreset){
       x.thruHol=$('e_thru').checked; x.thruOnw=$('e_onw').checked; x.perDay=+$('e_pd').value||0; x.ms=$('e_ms').value||''; x.note=$('e_note').value;
       if(d<1){ x.days={}; }
       else if(!t||b!==beginDef||d!==durDef){ var nd={}; genPlan(x,P(b),d).forEach(function(ds){nd[ds]=(ds in x.days)?x.days[ds]:0;}); x.days=nd; }
+      var pv=$('e_part').value; if(pv!=='-'){ for(var dk in x.days){ var cv=x.days[dk], ob=(cv&&typeof cv==='object')?cv:{d:isD(cv)?1:0}; ob.p=pv; if(ob.h==null&&!ob.l&&!ob.o&&!ob.s&&!ob.p&&!ob.dt) x.days[dk]=ob.d; else x.days[dk]=ob; } }
       if(!t){ x.ord=1e5; S.tasks.push(x); }
       renumber(x.projectId);
       if(x.projectId!==V.pid) V.pid=x.projectId;
@@ -1979,6 +1983,20 @@ function preview(){
   if(g.side==='r') i1=Math.max(i0,i1+g.dd); else i0=Math.min(i1,i0+g.dd);
   gh.style.left=(i0*c)+'px'; gh.style.width=((i1-i0+1)*c)+'px';
 }
+var LP=null;
+function lpCancel(){ if(LP){ clearTimeout(LP.timer); if(LP.el) LP.el.classList.remove('lphold'); LP=null; } }
+app.addEventListener('pointerdown',function(e){
+  if(e.button>0) return;
+  var lt=e.target, lab=lt.closest&&lt.closest('.row.task .lab');
+  if(lab&&V.tab==='planning'&&!lt.closest('[data-grip],[data-chk],.ed,.xdel,select,.stin,.lwgrip')){
+    lpCancel(); var rid=lab.closest('[data-row]').getAttribute('data-row');
+    LP={x:e.clientX,y:e.clientY,el:lab,timer:setTimeout(function(){ var a=document.activeElement; if(a&&a.blur) a.blur(); lpCancel(); if(navigator.vibrate) navigator.vibrate(40); openEdit(rid); },2000)};
+    setTimeout(function(){ if(LP&&LP.el===lab) lab.classList.add('lphold'); },300);
+  }
+});
+document.addEventListener('pointermove',function(e){ if(LP&&(Math.abs(e.clientX-LP.x)>8||Math.abs(e.clientY-LP.y)>8)) lpCancel(); },true);
+document.addEventListener('pointerup',lpCancel,true);
+document.addEventListener('pointercancel',lpCancel,true);
 app.addEventListener('pointerdown',function(e){
   if(e.button>0) return;
   var t=e.target;
