@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:26</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:28</p>
   </form>
 </div>
 <style>
@@ -1191,8 +1191,8 @@ function viewPlanning(){
   h+='<div class="spacer"></div><button class="btn" type="button" data-bedit="1" '+(n?'':'disabled')+'>✎ Bewerk</button><button class="btn" type="button" data-bcopy="1" '+(n?'':'disabled')+'>⧉ Kopie</button><button class="btn danger'+(V.armed==='bdel'?' armed':'')+'" type="button" data-bdel="1" '+(n?'':'disabled')+'>🗑 '+(V.armed==='bdel'?'Zeker? ('+n+')':'Verwijder')+'</button></div>';
   h+='<details class="mobmore"'+(window.innerWidth>=700?' open':'')+'><summary>Meer opties</summary><div class="mobbody">';
   h+='<div class="tools hideful">'+periodTools()+'</div><div class="tools">'+'<div class="seg" role="group" aria-label="Breedte activiteiten">'+'<button type="button" data-lw="100" title="Standaardbreedte">↺ Standaard</button></div>'+'<div class="seg" role="group" aria-label="Zoom">'+[100,90,80,70,60,50].map(function(z){return '<button type="button" data-zoom="'+z+'" aria-pressed="'+(V.zoom===z)+'">'+z+'%</button>';}).join('')+'</div></div>'+'</div></div></details>';
-  if(V.mode==='move') h+='<div class="tools pastebar">'+(V.rsel.length?'<b>'+V.rsel.length+' stuk(ken) geselecteerd</b><div class="seg"><button type="button" data-rs="-5">◀ week</button><button type="button" data-rs="-1">◀ dag</button><button type="button" data-rs="1">dag ▶</button><button type="button" data-rs="5">week ▶</button></div><span style="display:inline-flex;gap:6px;align-items:center"><input type="text" id="rsTxt" placeholder="Tekst, bijv. 44" style="width:120px" aria-label="Tekst voor de geselecteerde balken" enterkeyhint="done"><button class="btn" type="button" data-rstxt="1">Zet in balken</button></span><button class="btn" type="button" data-addrfill="1">🏠 Adressen vullen…</button><button class="btn" type="button" data-bcopysel="1">📋 Kopiëren</button><button class="btn" type="button" data-rsall="1">Hele regel(s)</button><button class="btn" type="button" data-rsclear="1">✕ Wis selectie</button>':'<span style="color:var(--muted)">Tik op balken om ze te selecteren (oranje rand). Shift + klik selecteert alle balken van die regel. Sleep daarna, gebruik de pijlen, of kies Kopiëren.</span>')+'</div>';
-  if(V.bclip) h+='<div class="tools pastebar"><b>'+V.bclip.n+' dag(en) gekopieerd.</b><span style="color:var(--muted)">'+(V.bclip.one?'Tik op de dag en regel waar de eerste dag moet komen.':'Tik op de dag waar de eerste dag moet komen; ze blijven op hun eigen regels.')+' Je kunt vaker plakken.</span><button class="btn" type="button" data-bclear="1">✓ Klaar</button></div>';
+  if(V.mode==='move') h+='<div class="tools pastebar">'+(V.rsel.length?'<b>'+V.rsel.length+' stuk(ken) geselecteerd</b><div class="seg"><button type="button" data-rs="-5">◀ week</button><button type="button" data-rs="-1">◀ dag</button><button type="button" data-rs="1">dag ▶</button><button type="button" data-rs="5">week ▶</button></div><span style="display:inline-flex;gap:6px;align-items:center"><input type="text" id="rsTxt" placeholder="Tekst, bijv. 44" style="width:120px" aria-label="Tekst voor de geselecteerde balken" enterkeyhint="done"><button class="btn" type="button" data-rstxt="1">Zet in balken</button></span><button class="btn" type="button" data-addrfill="1">🏠 Adressen vullen…</button><button class="btn" type="button" data-bcopysel="1">📋 Kopiëren</button><button class="btn" type="button" data-tplsave="1">💾 Bewaar als sjabloon</button><button class="btn" type="button" data-rsall="1">Hele regel(s)</button><button class="btn" type="button" data-rsclear="1">✕ Wis selectie</button>':'<span style="color:var(--muted)">Tik op balken om ze te selecteren (oranje rand). Shift + klik selecteert alle balken van die regel. Sleep daarna, gebruik de pijlen, of kies Kopiëren.</span>')+'<button class="btn" type="button" data-tpls="1">📁 Sjablonen'+((S.templates||[]).length?' ('+S.templates.length+')':'')+'</button></div>';
+  if(V.bclip) h+='<div class="tools pastebar"><b>'+(V.bclip.tpl?'Sjabloon “'+esc(V.bclip.tpl)+'”: '+V.bclip.n+' dag(en).':V.bclip.n+' dag(en) gekopieerd.')+'</b><span style="color:var(--muted)">'+(V.bclip.one?'Tik op de dag en regel waar de eerste dag moet komen.':'Tik op de dag waar de eerste dag moet komen; ze blijven op hun eigen regels.')+' Je kunt vaker plakken.</span><button class="btn" type="button" data-bclear="1">✓ Klaar</button></div>';
   if(V.tclip) h+='<div class="tools pastebar"><b>'+V.tclip.length+' regel(s) gekopieerd.</b><span style="color:var(--muted)">Tik in de planning op de dag en regel waar ze moeten komen.</span><button class="btn" type="button" data-tclear="1">✓ Klaar</button></div>';
   if(V.expMsg) h+='<p class="hint">'+esc(V.expMsg)+'</p>';
   var hint={normal:'Tik op een blokje om de dag af te vinken. Houd een blokje even vast om er tekst in te zetten, of uren of een sticker. Vegen scrolt de planning. Wil je blokjes verschuiven of langer maken, zet dan ↔ Verplaatsen aan.',postit:'Tekst/sticker: tik op een blokje om er tekst in te zetten (bijv. een huisnummer), of uren, een sticker of een notitie. Bij Toepassen op kies je of het voor één dag, het hele stuk of de hele taak geldt. Tik nog eens op de knop om te stoppen.',weather:'Onwerkbaar weer: tik bovenin op een dag om hem als onwerkbaar aan of uit te vinken. De planning schuift niet op; de dag wordt alleen geregistreerd. Tik nog eens op de knop om te stoppen.',free:'Vrije dag: tik bovenin op een dag om hem als vrije dag aan of uit te vinken. De werkdagen die erop vallen schuiven op. Tik nog eens op de knop om te stoppen.',move:'Verplaatsen: sleep een blokje om dat stuk te verschuiven, sleep de streepjes aan de zijkant om het langer of korter te maken. Aangevinkte regels schuiven samen op. Zet daarna Normaal weer aan.',draw:'Tekenen: tik of trek met je pen over een regel om dagen in te plannen. Tik op een bestaand blokje om het te openen. Zet Normaal aan om weer te scrollen.',erase:'Gum: tik of veeg over blokjes om ze weg te halen. Zet Normaal aan om weer te scrollen.'}[V.mode];
@@ -1736,7 +1736,7 @@ function openAddr(){
 function copySel(){
   var items=[], base=null, n=0, tids={};
   V.rsel.forEach(function(key){ var p=key.split('|'), t=T(p[0]); if(!t) return;
-    runs(t).forEach(function(run){ if(run[0]!==p[1]) return; run.forEach(function(ds){ items.push({tid:t.id,ds:ds,v:JSON.parse(JSON.stringify(t.days[ds]))}); tids[t.id]=1; n++; if(!base||ds<base) base=ds; }); });
+    runs(t).forEach(function(run){ if(run[0]!==p[1]) return; run.forEach(function(ds){ items.push({tid:t.id,name:t.name,disc:t.disc||'',ds:ds,v:JSON.parse(JSON.stringify(t.days[ds]))}); tids[t.id]=1; n++; if(!base||ds<base) base=ds; }); });
   });
   if(!n) return; V.bclip={items:items,base:base,n:n,one:Object.keys(tids).length===1};
   if(navigator.clipboard){ try{ navigator.clipboard.writeText(items.map(function(x){ var t=T(x.tid); return x.ds+'\t'+(t?t.name:''); }).join('\n')); }catch(e){} }
@@ -1754,10 +1754,54 @@ function askPaste(tid,ms){
     mut(function(){ pasteSel(tid,ms,l); },'balken geplakt'); });
   setTimeout(function(){ var q=$('q_l'); if(q){ q.focus(); q.select(); } },30);
 }
+function rowFor(x,tid){
+  var tgt=T(tid), pid=tgt?tgt.projectId:cpid(); if(!pid) return null;
+  var t=T(x.tid); if(t&&t.projectId===pid) return t;
+  var nm=(x.name||'').trim().toLowerCase();
+  t=S.tasks.filter(function(q){return q.projectId===pid&&(q.name||'').trim().toLowerCase()===nm;})[0];
+  if(t){ x.tid=t.id; return t; }
+  var d=x.disc&&discsOf(pid).filter(function(q){return q.id===x.disc;})[0];
+  if(!d&&x.disc){ var od=S.disciplines.filter(function(q){return q.id===x.disc;})[0]; if(od) d=discsOf(pid).filter(function(q){return q.name===od.name;})[0]; }
+  t={id:uid(),projectId:pid,chap:tgt?tgt.chap||'':'',name:x.name||'Activiteit',personId:'',disc:d?d.id:'',perDay:8,note:'',days:{},thruHol:false,ms:'',ord:(tgt&&tgt.ord!=null?tgt.ord:0)+0.5};
+  S.tasks.push(t); x.tid=t.id; renumber(pid); return t;
+}
+function tplSave(){
+  copySel(); var c=V.bclip; if(!c) return;
+  var h='<div class="ov" id="ov"><form class="dlg" id="frm" style="max-width:420px"><h2>Bewaar als sjabloon</h2><div class="in">';
+  h+='<p class="hint" style="margin:0 0 8px">'+c.n+' dag(en) op '+(c.one?'1 regel':Object.keys(c.items.reduce(function(a,x){a[x.tid]=1;return a;},{})).length+' regels')+'.</p>';
+  h+='<label>Naam van het sjabloon<input type="text" id="s_n" autocomplete="off" placeholder="Bijv. Badkamer, Keuken, Toilet" enterkeyhint="done"></label>';
+  h+='</div><div class="acts"><span class="spacer"></span><button class="btn" type="button" id="s_cancel">Annuleer</button><button class="btn save" type="submit">Bewaren</button></div></form></div>';
+  document.getElementById('modal').innerHTML=h; V.bclip=null;
+  var $=function(x){return document.getElementById(x);};
+  $('s_cancel').addEventListener('click',function(){ closeModal(); render(); });
+  $('frm').addEventListener('submit',function(e){ e.preventDefault(); var nm=$('s_n').value.trim(); if(!nm){ $('s_n').focus(); return; }
+    var tp={id:uid(),name:nm,one:c.one,base:c.base,n:c.n,items:c.items.map(function(x){ var y=JSON.parse(JSON.stringify(x)); y.v=fresh(y.v); if(y.v&&typeof y.v==='object') y.v.l=''; return y; })};
+    closeModal(); mut(function(){ if(!S.templates) S.templates=[]; var same=S.templates.filter(function(q){return q.name.toLowerCase()===nm.toLowerCase();})[0]; if(same) S.templates.splice(S.templates.indexOf(same),1,tp); else S.templates.push(tp); },'sjabloon bewaard'); });
+  setTimeout(function(){ var q=$('s_n'); if(q) q.focus(); },30);
+}
+function tplList(){
+  var L=S.templates||[];
+  var h='<div class="ov" id="ov"><div class="dlg" style="max-width:480px"><h2>Sjablonen</h2><div class="in">';
+  if(!L.length) h+='<p class="hint">Nog geen sjablonen. Selecteer balken in ↔ Verplaatsen en tik op 💾 Bewaar als sjabloon.</p>';
+  L.forEach(function(tp){ var rows={}; tp.items.forEach(function(x){ rows[x.name]=1; });
+    h+='<div class="acc" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:160px"><b>'+esc(tp.name)+'</b><div class="hint" style="margin:2px 0 0">'+tp.n+' dag(en) · '+esc(Object.keys(rows).join(', '))+'</div></div>'
+      +'<button class="btn save" type="button" data-tpluse="'+tp.id+'">Plakken</button><button class="btn" type="button" data-tpldel="'+tp.id+'" aria-label="Verwijder sjabloon '+esc(tp.name)+'">🗑</button></div>'; });
+  h+='</div><div class="acts"><span class="spacer"></span><button class="btn" type="button" id="l_close">Sluiten</button></div></div></div>';
+  document.getElementById('modal').innerHTML=h;
+  document.getElementById('l_close').addEventListener('click',closeModal);
+  document.getElementById('ov').addEventListener('click',function(e){ var b;
+    if(e.target.id==='ov'){ closeModal(); return; }
+    if((b=e.target.closest('[data-tpluse]'))){ var tp=L.filter(function(q){return q.id===b.getAttribute('data-tpluse');})[0]; if(!tp) return;
+      V.bclip={items:JSON.parse(JSON.stringify(tp.items)),base:tp.base,n:tp.n,one:tp.one,tpl:tp.name}; closeModal(); render(); return; }
+    if((b=e.target.closest('[data-tpldel]'))){ var id=b.getAttribute('data-tpldel'), tp2=L.filter(function(q){return q.id===id;})[0];
+      if(tp2&&b.getAttribute('data-sure')){ mut(function(){ S.templates=S.templates.filter(function(q){return q.id!==id;}); },'sjabloon verwijderd'); tplList(); }
+      else { b.setAttribute('data-sure','1'); b.textContent='Zeker?'; } }
+  });
+}
 function pasteSel(tid,ms,lbl){
   var c=V.bclip; if(!c) return; var start=isWE(ms)?nextWd(ms):ms, cnt=0;
   c.items.forEach(function(x){
-    var t=T(c.one?tid:x.tid); if(!t) return;
+    var t=c.one?T(tid):rowFor(x,tid); if(!t) return;
     var nd=F(shiftWd(start,wdDiff(P(c.base),P(x.ds))));
     if(nd in t.days||hardOff(t,nd)) return;
     t.days[nd]=fresh(x.v); if(lbl) setLbl(t,nd,lbl); cnt++;
@@ -1937,6 +1981,8 @@ document.addEventListener('click',function(e){
   if((el=t.closest('[data-rs]'))){ var n5=+el.getAttribute('data-rs'); mut(function(){shiftRsel(n5);}); return; }
   if(t.closest('[data-rsclear]')){ V.rsel=[]; render(); return; }
   if(t.closest('[data-rstxt]')){ var tx=(document.getElementById('rsTxt')||{}).value; tx=(tx||'').trim(); mut(function(){ textSel(tx); },'tekst in balken'); return; }
+  if(t.closest('[data-tplsave]')){ tplSave(); return; }
+  if(t.closest('[data-tpls]')){ tplList(); return; }
   if(t.closest('[data-addrfill]')){ openAddr(); return; }
   if(t.closest('[data-bcopysel]')){ copySel(); render(); return; }
   if(t.closest('[data-bclear]')){ V.bclip=null; render(); return; }
