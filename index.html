@@ -365,7 +365,10 @@ body[data-role="projectleider"] [data-a="clear"],body[data-role="projectleider"]
 .udays button[aria-pressed="true"]{background:#EB6608;border-color:#EB6608;color:#fff}
 .udays button[aria-pressed="true"] span,.udays button[aria-pressed="true"] i{color:#fff}
 .ulist{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
-.uitem{display:flex;align-items:stretch;gap:0;background:var(--surface);border:1px solid var(--line2);border-left:6px solid var(--c);border-radius:8px;position:relative;overflow:visible}
+.uitem{display:flex;align-items:stretch;gap:0;background:color-mix(in srgb,var(--c) 9%,var(--surface));border:3px solid var(--c);border-left-width:10px;border-radius:10px;position:relative;overflow:visible}
+.uitem.nod{background:var(--surface)}
+.udisc{display:inline-block;align-self:flex-start;margin:0 0 4px;padding:2px 10px;border-radius:999px;background:var(--c);color:#fff;font-size:12px;font-weight:700;letter-spacing:.02em;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+.uitem .ubody{display:flex;flex-direction:column}
 .uitem.done{opacity:.75}
 .utick{flex:none;width:58px;border:0;border-right:1px solid var(--line);background:none;font:700 26px/1 var(--body);color:#fff}
 .utick::before{content:"";display:block;width:30px;height:30px;margin:auto;border:2px solid var(--c);border-radius:6px}
@@ -467,7 +470,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:53</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:57</p>
   </form>
 </div>
 <style>
@@ -1351,9 +1354,9 @@ function viewUitv(){
 }
 function uItem(t,ds,nr,showDate){
   var v=t.days[ds], o=(v&&typeof v==='object')?v:{}, done=isD(v), loc=dLoc(t,ds), col=colorOf(t), d=disc(t.disc);
-  var h='<div class="uitem'+(done?' done':'')+'" style="--c:'+esc(col)+'">';
+  var h='<div class="uitem'+(done?' done':'')+(d?'':' nod')+'" style="--c:'+esc(d?col:'#1A1A1A')+'">';
   h+='<button type="button" class="utick" data-utick="'+t.id+'|'+ds+'" aria-pressed="'+done+'" aria-label="'+(done?'Afvinken ongedaan maken':'Afvinken')+'">'+(done?'✓':'')+'</button>';
-  h+='<button type="button" class="ubody" data-upost="'+t.id+'|'+ds+'"><span class="unm">'+nr+'. '+esc(t.name)+'</span><span class="umeta">'+(showDate?esc(shortD(ds))+' · ':'')+(d?esc(d.name)+' · ':'')+dHrs(t,ds)+' uur'+(loc?' · '+esc(loc):'')+'</span>'+(o.o?'<span class="unote">'+esc(o.o)+'</span>':'')+'</button>';
+  h+='<button type="button" class="ubody" data-upost="'+t.id+'|'+ds+'">'+(d?'<span class="udisc">'+esc(d.name)+'</span>':'<span class="udisc">Geen vakgebied</span>')+'<span class="unm">'+nr+'. '+esc(t.name)+'</span><span class="umeta">'+(showDate?esc(shortD(ds))+' · ':'')+dHrs(t,ds)+' uur'+(loc?' · '+esc(loc):'')+'</span>'+(o.o?'<span class="unote">'+esc(o.o)+'</span>':'')+'</button>';
   if(o.s) h+='<span class="ustk '+esc(o.s)+'">!</span>';
   return h+'</div>';
 }
