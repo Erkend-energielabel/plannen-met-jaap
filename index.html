@@ -367,6 +367,7 @@ body[data-role="projectleider"] [data-a="clear"],body[data-role="projectleider"]
 .ulist{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
 .uitem{display:flex;align-items:stretch;gap:0;background:color-mix(in srgb,var(--c) 9%,var(--surface));border:3px solid var(--c);border-left-width:10px;border-radius:10px;position:relative;overflow:visible}
 .uitem.nod{background:var(--surface)}
+.uitem.nolock .utick{opacity:.35;cursor:not-allowed}
 .uchg{display:inline-block;vertical-align:2px;padding:2px 8px;border-radius:4px;font:800 11px/1.3 var(--body,inherit);letter-spacing:.06em;color:#fff;background:#B42318;margin-right:4px}
 .uchg.aangepast{background:#EB6608}
 .uhn{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:84px;max-width:45%;padding:6px 12px;margin:8px 8px 8px 0;border-radius:8px;background:#fff;border:2px solid var(--c);color:#111;font:800 30px/1.05 var(--display,inherit);text-align:center;word-break:break-word}
@@ -475,7 +476,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 19:00</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 19:01</p>
   </form>
 </div>
 <style>
@@ -750,7 +751,11 @@ function tStart(t){var l=dlist(t);return l.length?l[0]:null;}
 function tEnd(t){var l=dlist(t);return l.length?l[l.length-1]:null;}
 function tCount(t){return Object.keys(t.days||{}).length;}
 function isD(v){return v===1||v===true||(!!v&&typeof v==='object'&&v.d===1);}
-function setD(t,ds,done){var v=t.days[ds];if(v&&typeof v==='object')v.d=done?1:0;else t.days[ds]=done?1:0;}
+function setD(t,ds,done){var v=t.days[ds];if(done){ if(!v||typeof v!=='object') v=t.days[ds]={d:0}; v.d=1; v.dt=Date.now(); v.du=ME.id||''; } else if(v&&typeof v==='object'){ v.d=0; delete v.dt; delete v.du; if(v.h==null&&!v.l&&!v.o&&!v.s&&!v.p) t.days[ds]=0; } else t.days[ds]=0;}
+function toast(msg){ var el=document.getElementById('toastx'); if(!el){ el=document.createElement('div'); el.id='toastx'; el.setAttribute('role','status'); el.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A1A1A;color:#fff;padding:12px 18px;border-radius:8px;font-size:15px;z-index:9999;max-width:90vw;box-shadow:0 4px 16px rgba(0,0,0,.3)'; document.body.appendChild(el); } el.textContent=msg; el.hidden=false; clearTimeout(el._t); el._t=setTimeout(function(){ el.hidden=true; },3000); }
+function canTick(t){ var r=role(); if(r==='beheerder'||r==='projectleider') return true; var m=myMember(), d=disc(t.disc); if(!m||!d||!m.dnames||!m.dnames.length) return false; return m.dnames.indexOf((d.name||'').trim().toLowerCase())>=0; }
+function whoName(uid){ var m=members().filter(function(x){return x.uid===uid;})[0]; return (m&&m.naam)||(uid&&uid.split('@')[0])||''; }
+function hhmm(ms){ var d=new Date(ms), z=function(n){return ('0'+n).slice(-2);}; return z(d.getHours())+':'+z(d.getMinutes()); }
 function dHrs(t,ds){var v=t.days[ds];return (v&&typeof v==='object'&&v.h!=null&&v.h!=='')?+v.h:((+t.perDay||0)*((v&&typeof v==='object'&&(v.p==='o'||v.p==='m'))?0.5:1));}
 function dPart(t,ds){var v=t.days[ds];return (v&&typeof v==='object'&&(v.p==='o'||v.p==='m'))?v.p:'';}
 function dLoc(t,ds){var v=t.days[ds];return (v&&typeof v==='object'&&v.l)?String(v.l):'';}
@@ -1377,9 +1382,10 @@ function viewUitv(){
 }
 function uItem(t,ds,nr,showDate){
   var v=t.days[ds], o=(v&&typeof v==='object')?v:{}, done=isD(v), loc=dLoc(t,ds), col=colorOf(t), d=disc(t.disc);
-  var h='<div class="uitem'+(done?' done':'')+(d?'':' nod')+'" style="--c:'+esc(d?col:'#1A1A1A')+'">';
+  var ok=canTick(t);
+  var h='<div class="uitem'+(done?' done':'')+(ok?'':' nolock')+(d?'':' nod')+'" style="--c:'+esc(d?col:'#1A1A1A')+'">';
   h+='<button type="button" class="utick" data-utick="'+t.id+'|'+ds+'" aria-pressed="'+done+'" aria-label="'+(done?'Afvinken ongedaan maken':'Afvinken')+'">'+(done?'✓':'')+'</button>';
-  h+='<button type="button" class="ubody" data-upost="'+t.id+'|'+ds+'">'+(d?'<span class="udisc">'+esc(d.name)+'</span>':'<span class="udisc">Geen vakgebied</span>')+'<span class="unm">'+(function(){ var c=chgOf(t,ds); return c?'<span class="uchg '+c.k+'">'+(c.k==='nieuw'?'NIEUW':'AANGEPAST')+'</span> ':''; })()+nr+'. '+esc(t.name)+'</span><span class="umeta">'+(showDate?esc(shortD(ds))+' · ':'')+dHrs(t,ds)+' uur'+(dPart(t,ds)?' · '+(dPart(t,ds)==='o'?'ochtend':'middag'):'')+'</span>'+(o.o?'<span class="unote">'+esc(o.o)+'</span>':'')+'</button>';
+  h+='<button type="button" class="ubody" data-upost="'+t.id+'|'+ds+'">'+(d?'<span class="udisc">'+esc(d.name)+'</span>':'<span class="udisc">Geen vakgebied</span>')+'<span class="unm">'+(function(){ var c=chgOf(t,ds); return c?'<span class="uchg '+c.k+'">'+(c.k==='nieuw'?'NIEUW':'AANGEPAST')+'</span> ':''; })()+nr+'. '+esc(t.name)+'</span><span class="umeta">'+(showDate?esc(shortD(ds))+' · ':'')+(done&&o.dt?'<b style="color:#111">✓ '+hhmm(o.dt)+(new Date(o.dt).toDateString()!==new Date().toDateString()?' ('+new Date(o.dt).getDate()+'-'+(new Date(o.dt).getMonth()+1)+')':'')+(o.du?' · '+esc(whoName(o.du)):'')+'</b> · ':'')+dHrs(t,ds)+' uur'+(dPart(t,ds)?' · '+(dPart(t,ds)==='o'?'ochtend':'middag'):'')+'</span>'+(o.o?'<span class="unote">'+esc(o.o)+'</span>':'')+'</button>';
   if(loc) h+='<span class="uhn" title="Huisnummer / adres"><small>Nr.</small>'+esc(loc)+'</span>';
   if(o.s) h+='<span class="ustk '+esc(o.s)+'">!</span>';
   return h+'</div>';
@@ -1395,6 +1401,9 @@ function viewToegang(){
     h+='<button type="button" class="xdel'+(V.armed==='m'+m.uid?' armed':'')+'" data-mdel="'+esc(m.uid)+'" aria-label="Toegang intrekken">'+(V.armed==='m'+m.uid?'✓?':'×')+'</button></div>';
     h+='<div class="f" style="grid-template-columns:1fr 1fr;margin:6px 0"><label>Naam<input type="text" data-mnaam="'+esc(m.uid)+'" value="'+esc(m.naam||'')+'" placeholder="Naam van deze persoon"></label><label>Bedrijf<input type="text" data-mbedr="'+esc(m.uid)+'" value="'+esc(m.bedrijf!==undefined?m.bedrijf:(m.note||''))+'" placeholder="Bijv. bedrijfsnaam"></label></div>';
     if(m.role==='beheerder') h+='<p class="hint">Ziet alle projecten.</p>';
+    if(m.role==='uitvoerder'){ var dn={}; S.disciplines.forEach(function(d){ var k=(d.name||'').trim(); if(k) dn[k.toLowerCase()]=k; }); var mine=m.dnames||[];
+      h+='<p class="hint" style="margin:8px 0 4px"><b>Mag afvinken voor</b> (in Uitvoering en planning)</p><div class="acc-pr">'+(Object.keys(dn).length?Object.keys(dn).sort().map(function(k){ return '<label style="display:inline-flex;align-items:center;gap:6px;margin:0 12px 6px 0;font-size:14px"><input type="checkbox" data-mdn="'+esc(m.uid)+'" value="'+esc(k)+'"'+(mine.indexOf(k)>=0?' checked':'')+'> '+esc(dn[k])+'</label>'; }).join(''):'<span class="hint">Nog geen vakgebieden.</span>')+'</div>';
+      if(!mine.length) h+='<p class="hint" style="color:#B42318;margin:2px 0 0">Nog niets aangevinkt: deze persoon kan niets afvinken.</p>'; }
     var lg=(S.log||[]).filter(function(x){return x.u===m.uid;}), cnt={};
     lg.forEach(function(x){ cnt[x.a]=(cnt[x.a]||0)+1; });
     var top=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a];}).slice(0,4).map(function(k){return cnt[k]+' × '+esc(k);}).join(', ');
@@ -1628,7 +1637,7 @@ function openPostit(tid,ds,r){
   var curS=(v&&typeof v==='object'&&v.s)||'';
   h+='<div class="w"><span style="font-size:12px;color:var(--muted)">Sticker (alleen deze dag)</span><div class="seg">'+[['','Geen'],['geel','! Geel'],['rood','! Rood']].map(function(x){return '<button type="button" data-st="'+x[0]+'" aria-pressed="'+(curS===x[0])+'">'+x[1]+'</button>';}).join('')+'</div><input type="hidden" id="p_s" value="'+curS+'"></div>';
   h+='<label class="w">Notitie (alleen deze dag)<textarea id="p_o" rows="2" placeholder="bijv. wacht op levering">'+esc((v&&typeof v==='object'&&v.o)||'')+'</textarea></label>';
-  h+='<label class="chk w"><input type="checkbox" id="p_d"'+(isD(v)?' checked':'')+'> Afgevinkt (gereed)</label>';
+  h+='<label class="chk w"><input type="checkbox" id="p_d"'+(isD(v)?' checked':'')+(canTick(t)?'':' disabled')+'> Afgevinkt (gereed)'+((v&&typeof v==='object'&&v.d&&v.dt)?' <span class="hint" style="margin:0">om '+hhmm(v.dt)+(v.du?' door '+esc(whoName(v.du)):'')+'</span>':'')+(canTick(t)?'':' <span class="hint" style="margin:0">(niet jouw vakgebied)</span>')+'</label>';
   h+='<label class="w">Toepassen op<select id="p_scope"><option value="day">Alleen deze dag</option><option value="run">Dit hele stuk ('+((runs(t)[r]||[]).length)+' dagen)</option><option value="all">Hele taak ('+tCount(t)+' dagen)</option></select></label>';
   h+='</div><p class="hint">Laat Uren leeg om de standaard van de taak te gebruiken ('+(+t.perDay||0)+' uur).</p><div class="acts"><button class="btn danger" type="button" id="p_del">Dag verwijderen</button><span class="spacer"></span><button class="btn" type="button" id="p_cancel">Annuleer</button><button class="btn save" type="submit">Opslaan</button></div></div></form></div>';
   document.getElementById('modal').innerHTML=h;
@@ -1646,8 +1655,8 @@ function openPostit(tid,ds,r){
     mut(function(){ list.forEach(function(k){
       var cur=t.days[k], o=(cur&&typeof cur==='object')?cur:{d:isD(cur)?1:0};
       o.h=hh===''?null:+hh; o.l=ll; o.p=pp;
-      if(k===ds){ o.d=dd?1:0; o.o=oo; o.s=ss; }
-      if(o.h==null&&!o.l&&!o.o&&!o.s&&!o.p) t.days[k]=o.d; else t.days[k]=o;
+      if(k===ds){ o.o=oo; o.s=ss; t.days[k]=o; if(canTick(t)&&dd!==isD(o)) setD(t,k,dd); o=t.days[k]; if(!o||typeof o!=='object') return; }
+      if(o.h==null&&!o.l&&!o.o&&!o.s&&!o.p&&!o.dt) t.days[k]=o.d; else t.days[k]=o;
     }); });
     closeModal();
   });
@@ -1782,7 +1791,7 @@ function textSel(txt){
   V.rsel.forEach(function(key){ var p=key.split('|'), t=T(p[0]); if(!t) return;
     runs(t).forEach(function(run){ if(run[0]!==p[1]) return; run.forEach(function(k){
       var cur=t.days[k], o=(cur&&typeof cur==='object')?cur:{d:isD(cur)?1:0}; o.l=txt;
-      if(o.h==null&&!o.l&&!o.o&&!o.s&&!o.p) t.days[k]=o.d; else t.days[k]=o; }); });
+      if(o.h==null&&!o.l&&!o.o&&!o.s&&!o.p&&!o.dt) t.days[k]=o.d; else t.days[k]=o; }); });
   });
 }
 function selDays(){
@@ -1799,7 +1808,7 @@ function addrList(o){
   for(var i=0;i<n;i++){ var nr=st+i*sp; out.push((o.straat?o.straat.trim()+' ':'')+nr+(o.toev||'')); }
   return out;
 }
-function setLbl(t,k,txt){ var cur=t.days[k], o=(cur&&typeof cur==='object')?cur:{d:isD(cur)?1:0}; o.l=txt; if(o.h==null&&!o.l&&!o.o&&!o.s&&!o.p) t.days[k]=o.d; else t.days[k]=o; }
+function setLbl(t,k,txt){ var cur=t.days[k], o=(cur&&typeof cur==='object')?cur:{d:isD(cur)?1:0}; o.l=txt; if(o.h==null&&!o.l&&!o.o&&!o.s&&!o.p&&!o.dt) t.days[k]=o.d; else t.days[k]=o; }
 function openAddr(){
   var days=selDays(); if(!days.length) return;
   var h='<div class="ov" id="ov"><form class="dlg" id="frm" style="max-width:520px"><h2>Adressen in balken zetten</h2><div class="in">';
@@ -1992,7 +2001,7 @@ app.addEventListener('pointerup',function(e){
   if(g.k==='row'){ hideDrop(); g.el.style.opacity=''; g.el.style.transform=''; g.el.style.zIndex=''; if(g.moved) mut(function(){moveRow(g.id,e.clientY);}); return; }
   if(g.k==='dtap'){ clearTimeout(g.timer); openEdit(g.tid); return; }
   if(g.k==='erase'||g.k==='draw'){ if(!g.changed) UNDO.pop(); else { normAll(); S.demo=false; try{ trackChg(g.pre); }catch(x){} logAct(g.k==='draw'?'vakje gekleurd':'vakje gewist'); save(); } render(); return; }
-  if(g.k==='tick'){ clearTimeout(g.timer); if(g.moved) return; if(V.mode==='postit'){ openPostit(g.tid,g.ds,g.r); return; } if(V.mode==='normal'){ mut(function(){ var t=T(g.tid); if(t&&(g.ds in t.days)) setD(t,g.ds,!isD(t.days[g.ds])); },'afgevinkt'); } return; }
+  if(g.k==='tick'){ clearTimeout(g.timer); if(g.moved) return; if(V.mode==='postit'){ openPostit(g.tid,g.ds,g.r); return; } if(V.mode==='normal'){ var tq=T(g.tid); if(tq&&!canTick(tq)){ toast('Je kunt alleen werk van je eigen vakgebied afvinken.'); return; } mut(function(){ var t=T(g.tid); if(t&&(g.ds in t.days)) setD(t,g.ds,!isD(t.days[g.ds])); },'afgevinkt'); } return; }
   if(g.k==='bpaste'){ if(!g.moved){ var ci2=colAt(g.geo,e.clientX); askPaste(g.tid,g.geo.C[ci2]); } return; }
   if(g.k==='tap'){ clearTimeout(g.timer); if(!g.moved&&V.tclip){ var ci=colAt(g.geo,e.clientX); mut(function(){pasteRows(g.tid,g.geo.C[ci]);}); } return; }
   if(g.k==='move'){
@@ -2020,7 +2029,7 @@ document.addEventListener('click',function(e){
   if((el=t.closest('[data-vmode]'))){ var vm=el.getAttribute('data-vmode'); var me0=myMember(); if(!me0) return; mut(function(){ me0.view=vm; }); return; }
   if(t.closest('[data-clearp]')){ if(isUitv()) return; openClear(); return; }
   if((el=t.closest('[data-uday]'))){ V.uDay=+el.getAttribute('data-uday'); render(); return; }
-  if((el=t.closest('[data-utick]'))){ var q=el.getAttribute('data-utick').split('|'), tk=T(q[0]); if(tk&&canProj(tk.projectId)) mut(function(){ if(q[1] in tk.days) setD(tk,q[1],!isD(tk.days[q[1]])); }); return; }
+  if((el=t.closest('[data-utick]'))){ var q=el.getAttribute('data-utick').split('|'), tk=T(q[0]); if(tk&&canProj(tk.projectId)){ if(!canTick(tk)){ toast('Je kunt alleen werk van je eigen vakgebied afvinken.'); return; } mut(function(){ if(q[1] in tk.days) setD(tk,q[1],!isD(tk.days[q[1]])); },'afgevinkt'); } return; }
   if((el=t.closest('[data-upost]'))){ var q2=el.getAttribute('data-upost').split('|'), tk2=T(q2[0]); if(tk2) openPostit(tk2.id,q2[1],runIdx(tk2,q2[1])); return; }
   if((el=t.closest('[data-resetmail]'))){ if(!isAdmin()||!window.csWachtwoordMail) return; var rm=el.getAttribute('data-resetmail'), smx=document.getElementById('shareMsg'); el.disabled=true;
     Promise.resolve(window.csWachtwoordMail(rm)).then(function(r){ el.disabled=false; if(smx) smx.textContent=r&&r.ok?'Herstelmail verstuurd naar '+rm+'. Hij kiest daarmee zelf een nieuw wachtwoord.':((r&&r.fout)||'Versturen mislukt.'); }); return; }
@@ -2112,6 +2121,7 @@ document.addEventListener('change',function(e){
   if(t.hasAttribute&&t.hasAttribute('data-mrole')){ if(!isAdmin()) return; var mr=t.getAttribute('data-mrole'); mut(function(){ members().forEach(function(m){ if(m.uid===mr) m.role=t.value; }); }); return; }
   if(t.hasAttribute&&t.hasAttribute('data-mproj')){ if(!isAdmin()) return; var mp=t.getAttribute('data-mproj'); mut(function(){ members().forEach(function(m){ if(m.uid!==mp) return; m.projects=m.projects||[]; var i=m.projects.indexOf(t.value); if(t.checked&&i<0) m.projects.push(t.value); if(!t.checked&&i>=0) m.projects.splice(i,1); }); }); return; }
   if(t.hasAttribute&&t.hasAttribute('data-mview')){ if(!isAdmin()) return; var mv=t.getAttribute('data-mview'); mut(function(){ members().forEach(function(m){ if(m.uid===mv) m.view=t.value; }); }); return; }
+  if(t.hasAttribute&&t.hasAttribute('data-mdn')){ if(!isAdmin()) return; var mu=t.getAttribute('data-mdn'), dv=t.value, on=t.checked; mut(function(){ members().forEach(function(m){ if(m.uid!==mu) return; m.dnames=(m.dnames||[]).filter(function(x){return x!==dv;}); if(on) m.dnames.push(dv); }); }); return; }
   if(t.hasAttribute&&t.hasAttribute('data-mdisc')){ if(!isAdmin()) return; var md=t.getAttribute('data-mdisc'); mut(function(){ members().forEach(function(m){ if(m.uid!==md) return; m.discs=m.discs||[]; var i=m.discs.indexOf(t.value); if(t.checked&&i<0) m.discs.push(t.value); if(!t.checked&&i>=0) m.discs.splice(i,1); }); }); return; }
   if(t.hasAttribute&&(t.hasAttribute('data-mnaam')||t.hasAttribute('data-mbedr'))){ if(!isAdmin()) return; var isN=t.hasAttribute('data-mnaam'), mn=t.getAttribute(isN?'data-mnaam':'data-mbedr'); mut(function(){ members().forEach(function(m){ if(m.uid===mn){ if(isN) m.naam=t.value.trim(); else m.bedrijf=t.value.trim(); } }); }); return; }
   if(t.id==='viewAs'){ V.viewAsUid=t.value||null; V.pid=null; V.chk=[]; V.tab='planning'; render(); return; }
