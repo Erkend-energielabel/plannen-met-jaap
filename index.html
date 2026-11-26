@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 09:14</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 09:17</p>
   </form>
 </div>
 <style>
@@ -590,6 +590,30 @@ function sample(){
       mk('t8','p2','','Vervangen afvoer blok 1','u2','d1',b+2*W,10,0,8)
     ]};
 }
+function splitLegacy(o){
+  var pIds=o.projects.map(function(p){return p.id;});
+  var fix=function(list,field,after){
+    (list||[]).slice().forEach(function(it){
+      if(it.projectId) return;
+      var used=[]; o.tasks.forEach(function(t){ if(t[field]===it.id&&used.indexOf(t.projectId)<0) used.push(t.projectId); });
+      if(!used.length){ it.projectId=pIds[0]; return; }
+      it.projectId=used[0];
+      used.slice(1).forEach(function(pid){
+        var c=JSON.parse(JSON.stringify(it)); c.id=uid(); c.projectId=pid;
+        if(after) after(it,c,pid);
+        list.push(c);
+        if(o.dkw&&o.dkw[it.id]) o.dkw[c.id]=o.dkw[it.id];
+        o.tasks.forEach(function(t){ if(t.projectId===pid&&t[field]===it.id) t[field]=c.id; });
+      });
+    });
+  };
+  fix(o.disciplines,'disc',null);
+  fix(o.people,'personId',function(orig,copy,pid){
+    var d=(o.disciplines||[]).filter(function(x){return x.id===orig.disc;})[0];
+    var same=d?(o.disciplines||[]).filter(function(x){return x.projectId===pid&&x.name===d.name;})[0]:null;
+    copy.disc=same?same.id:'';
+  });
+}
 function migrate(o){
   if(!o||!o.tasks||!o.projects) return null;
   o.people=o.people||[];o.holidays=o.holidays||[];o.disciplines=o.disciplines||defDisc();o.chapters=o.chapters||[];
@@ -604,6 +628,7 @@ function migrate(o){
     ['start','end','progress','extra','gaps','done','b2'].forEach(function(k){delete t[k];});
     if(t.perDay==null) t.perDay=8; t.chap=t.chap||'';
   });
+  if(o.projects.length) splitLegacy(o);
   o.v=2; return o;
 }
 function loadLocal(){try{var j=localStorage.getItem('bouwplanner.v1');return j?JSON.parse(j):null;}catch(e){return null;}}
@@ -659,6 +684,9 @@ function disc(id){return S.disciplines.filter(function(d){return d.id===id;})[0]
 function chapOf(id){return S.chapters.filter(function(c){return c.id===id;})[0];}
 function T(id){return S.tasks.filter(function(t){return t.id===id;})[0];}
 function chapIdx(id){if(!id)return -1;for(var i=0;i<S.chapters.length;i++){if(S.chapters[i].id===id)return i;}return -1;}
+function cpid(){ var p=curProj(); return p?p.id:null; }
+function peopleOf(pid){ return S.people.filter(function(x){return x.projectId===pid;}); }
+function discsOf(pid){ return S.disciplines.filter(function(x){return x.projectId===pid;}); }
 function curProj(){ if(!V.pid||!proj(V.pid)||!canProj(V.pid)){ var vp=VP(); V.pid=vp[0]?vp[0].id:null; } return proj(V.pid); }
 /* ---------- rollen en toegang ---------- */
 var ME={ready:false,owner:false,id:null,user:null};
@@ -783,7 +811,7 @@ function doImport(text){
       var a=parseDate(c[0]); if(!a){ if(idx>0) bad++; return; }
       var b=parseDate(c[1])||a; if(P(b)<P(a)){bad++;return;}
       var who=c[2]||'Iedereen', wid='all';
-      if(who.toLowerCase()!=='iedereen'){ var pp=S.people.filter(function(p){return p.name.toLowerCase()===who.toLowerCase();})[0]; if(!pp){bad++;return;} wid=pp.id; }
+      if(who.toLowerCase()!=='iedereen'){ var pp=peopleOf(cpid()).filter(function(p){return p.name.toLowerCase()===who.toLowerCase();})[0]; if(!pp){bad++;return;} wid=pp.id; }
       var kind=c[3]||'Vakantie'; kinds.forEach(function(k){ if(k.toLowerCase()===kind.toLowerCase()) kind=k; });
       for(var d=P(a);d<=P(b);d+=DAY){ if(isWE(d)) continue; if(addHol(F(d),wid,kind)) added++; }
     });
@@ -940,7 +968,7 @@ function buildPdf(J){
   var ly=Math.min(y+7,PH-M-4), lx=M;
   doc.setFont('helvetica','bold'); doc.setFontSize(6.5); txt(INK); doc.text('LEGENDA',lx,ly); lx+=16;
   doc.setFont('helvetica','normal'); txt([90,90,90]);
-  S.disciplines.forEach(function(d){ var c=rgb(d.color); fill(mix(c,0.68)); draw(c); doc.setLineWidth(0.25); doc.roundedRect(lx,ly-2.6,3.4,3.2,0.5,0.5,'FD'); doc.text(d.name,lx+4.6,ly); lx+=doc.getTextWidth(d.name)+10; });
+  discsOf(cpid()).forEach(function(d){ var c=rgb(d.color); fill(mix(c,0.68)); draw(c); doc.setLineWidth(0.25); doc.roundedRect(lx,ly-2.6,3.4,3.2,0.5,0.5,'FD'); doc.text(d.name,lx+4.6,ly); lx+=doc.getTextWidth(d.name)+10; });
   fill([138,133,128]); doc.roundedRect(lx,ly-2.6,3.4,3.2,0.5,0.5,'F'); check(lx+1.7,ly-1,3); txt([90,90,90]); doc.text('Afgevinkt',lx+4.6,ly); lx+=doc.getTextWidth('Afgevinkt')+10;
   doc.setFillColor(255,232,214); doc.rect(lx,ly-2.6,3.4,3.2,'F'); hatch(lx,ly-2.6,3.4,3.2,[235,150,100]); doc.text('Vrije dag',lx+4.6,ly); lx+=doc.getTextWidth('Vrije dag')+10;
   doc.setFillColor(228,236,244); doc.rect(lx,ly-2.6,3.4,3.2,'F'); hatch(lx,ly-2.6,3.4,3.2,[160,182,204]); doc.text('Onwerkbaar weer',lx+4.6,ly); lx+=doc.getTextWidth('Onwerkbaar weer')+10;
@@ -1185,7 +1213,7 @@ function viewPlanning(){
   var taskRow=function(t){
     var nr=nrOf[t.id];
     var st=tStart(t), d=disc(t.disc), who=pers(t.personId);
-    var opts='<option value="">Geen vakgebied</option>'+S.disciplines.map(function(x){return '<option value="'+x.id+'"'+(x.id===t.disc?' selected':'')+'>'+esc(x.name)+'</option>';}).join('');
+    var opts='<option value="">Geen vakgebied</option>'+discsOf(cpid()).map(function(x){return '<option value="'+x.id+'"'+(x.id===t.disc?' selected':'')+'>'+esc(x.name)+'</option>';}).join('');
     return '<div class="row task" data-row="'+t.id+'"><div class="lab" title="'+esc(t.name+(who?' · '+who.name:'')+(d?' · '+d.name:''))+'">'+
       '<input type="checkbox" data-chk="'+t.id+'"'+(V.chk.indexOf(t.id)>=0?' checked':'')+' aria-label="Selecteer">'+
       '<span class="nr">'+nr+'</span><span class="grip" data-grip="'+t.id+'" title="Sleep om de regel te verplaatsen">☰</span>'+
@@ -1220,14 +1248,14 @@ function viewPlanning(){
     h+='<div class="holc'+(x.weather?' wx':'')+'" style="left:'+(L+i*c)+'px;width:'+c+'px"><span>'+(x.weather?'🌧 ':'')+esc(x.kind||'')+'</span></div>'; });
   if(idx[tdS]!=null) h+='<div class="todayl" style="left:'+(L+idx[tdS]*c+Math.round(c/2)-1)+'px"></div>';
   h+='</div></div>';
-  h+='<div class="foot"><div class="legend">'+S.disciplines.map(function(d){return '<span><i style="background:'+esc(d.color)+'"></i>'+esc(d.name)+'</span>';}).join('')+'<span>✓ Afgevinkt</span><span><i style="box-shadow:inset 0 0 0 2px var(--bad)"></i>Te laat</span></div><div class="spacer"></div>';
+  h+='<div class="foot"><div class="legend">'+discsOf(cpid()).map(function(d){return '<span><i style="background:'+esc(d.color)+'"></i>'+esc(d.name)+'</span>';}).join('')+'<span>✓ Afgevinkt</span><span><i style="box-shadow:inset 0 0 0 2px var(--bad)"></i>Te laat</span></div><div class="spacer"></div>';
   h+='</div>';
   return h;
 }
 function weekHead(){var h='';for(var i=0;i<V.weeks;i++){var m=V.start+i*7*DAY;h+='<th class="num">wk '+wkNr(m)+'<br>'+new Date(m).getUTCDate()+' '+MON[new Date(m).getUTCMonth()]+'</th>';}return h;}
 function viewBezetting(){
   var h='<div class="tools">'+periodTools()+'</div><div class="panel"><table><thead><tr><th>Persoon</th><th class="num">Uren/week</th>'+weekHead()+'</tr></thead><tbody>';
-  S.people.forEach(function(p){
+  peopleOf(cpid()).forEach(function(p){
     h+='<tr><td><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+esc(p.color)+';margin-right:6px"></i><b>'+esc(p.name)+'</b><br><span style="color:var(--muted);font-size:12px">'+esc(p.role||'')+'</span></td><td class="num">'+(+p.cap||40)+'</td>';
     for(var i=0;i<V.weeks;i++){
       var a=F(V.start+i*7*DAY), b=F(V.start+i*7*DAY+4*DAY), l=0, cap=+p.cap||40;
@@ -1254,7 +1282,7 @@ function viewLijst(){
 }
 function viewUren(){
   var fmt=function(n){return (Math.round(n*10)/10).toLocaleString('nl-NL');};
-  var groups=S.disciplines.map(function(d){return {name:d.name,color:d.color,f:function(t){return t.disc===d.id;}};});
+  var groups=discsOf(cpid()).map(function(d){return {name:d.name,color:d.color,f:function(t){return t.disc===d.id;}};});
   groups.push({name:'Geen vakgebied',color:'#8A8580',f:function(t){return !disc(t.disc);}});
   var total=0; VT().forEach(function(t){total+=tHours(t);});
   var colTot=[],i; for(i=0;i<V.weeks;i++) colTot.push(0);
@@ -1272,7 +1300,7 @@ function viewUren(){
 }
 function viewVrij(){
   var h='<div class="tools">'+periodTools()+'</div><div class="tools"><label style="font-size:12px;color:var(--muted)">Soort <select id="hKind">'+['Vakantie','Vrije dag','Feestdag','Kerstvakantie','Bouwvak'].map(function(k){return '<option>'+k+'</option>';}).join('')+'</select></label><button class="btn" type="button" data-feest="1">📅 Feestdagen toevoegen</button><span class="hint" style="margin:0">Vink een dag aan om hem vrij te zetten. Planregels op die dag schuiven één werkdag op.</span></div>';
-  var rows=[{id:'all',name:'Iedereen',role:'Hele team'}].concat(S.people), j,k;
+  var rows=[{id:'all',name:'Iedereen',role:'Hele team'}].concat(peopleOf(cpid())), j,k;
   h+='<div class="panel"><table><thead><tr><th rowspan="2">Persoon</th>';
   for(j=0;j<V.weeks;j++){var m=V.start+j*7*DAY;h+='<th colspan="5" style="text-align:center">wk '+wkNr(m)+' · '+MON[new Date(m).getUTCMonth()]+' '+new Date(m).getUTCFullYear()+'</th>';}
   h+='</tr><tr>';
@@ -1387,10 +1415,10 @@ function viewBeheer(){
   var h='<div class="cols"><div class="card"><h2>Projecten</h2>';
   VP().forEach(function(p){ h+='<div class="item"><input type="color" value="'+esc(p.color)+'" data-pk="color" data-pid="'+p.id+'" aria-label="Kleur"><input type="text" value="'+esc(p.nr||'')+'" data-pk="nr" data-pid="'+p.id+'" aria-label="Projectnummer" placeholder="Projectnr." style="flex:0 0 110px"><input type="text" value="'+esc(p.name)+'" data-pk="name" data-pid="'+p.id+'" aria-label="Projectnaam"><button class="btn danger'+(V.armed==='p'+p.id?' armed':'')+'" type="button" data-delp="'+p.id+'">'+(V.armed==='p'+p.id?'Zeker weten?':'Verwijder')+'</button></div>'; });
   h+='<div class="acts"><button class="btn" type="button" data-a="addp">+ Project</button></div><p class="hint">Een project verwijderen verwijdert ook de activiteiten en fasen.</p></div>';
-  h+='<div class="card"><h2>Deelnemers</h2>';
+  h+='<div class="card"><h2>Deelnemers van dit project</h2>';
   S.people.forEach(function(p){ h+='<div class="item"><input type="color" value="'+esc(p.color||'#8A8580')+'" data-uk="color" data-uid="'+p.id+'" aria-label="Kleur"><input type="text" value="'+esc(p.name)+'" data-uk="name" data-uid="'+p.id+'" aria-label="Naam"><input type="text" value="'+esc(p.role||'')+'" data-uk="role" data-uid="'+p.id+'" aria-label="Rol" placeholder="Rol"><input type="number" min="0" max="80" value="'+(+p.cap||40)+'" data-uk="cap" data-uid="'+p.id+'" aria-label="Uren per week"><select data-uk="disc" data-uid="'+p.id+'" aria-label="Vakgebied" style="flex:1"><option value="">Geen vakgebied</option>'+S.disciplines.map(function(d){return '<option value="'+d.id+'"'+(d.id===p.disc?' selected':'')+'>'+esc(d.name)+'</option>';}).join('')+'</select><button class="btn danger'+(V.armed==='u'+p.id?' armed':'')+'" type="button" data-delu="'+p.id+'">'+(V.armed==='u'+p.id?'Zeker?':'Verwijder')+'</button></div>'; });
   h+='<div class="acts"><button class="btn" type="button" data-a="addu">+ Deelnemer</button></div><p class="hint">De kleur geldt voor blokjes zonder vakgebied. Het getal is de capaciteit in uren per week.</p></div></div>';
-  h+='<div class="card"><h2>Vakgebieden</h2>';
+  h+='<div class="card"><h2>Vakgebieden van dit project</h2>';
   S.disciplines.forEach(function(d){ h+='<div class="item"><input type="color" value="'+esc(d.color)+'" data-dk="color" data-did="'+d.id+'" aria-label="Kleur"><input type="text" value="'+esc(d.name)+'" data-dk="name" data-did="'+d.id+'" aria-label="Vakgebied"><input type="text" value="'+esc(kwText(d))+'" data-dkw="1" data-did="'+d.id+'" aria-label="Trefwoorden" placeholder="trefwoorden (komma-gescheiden)" style="flex:2"><button class="btn danger" type="button" data-deld="'+d.id+'">Verwijder</button></div>'; });
   h+='<div class="acts"><button class="btn" type="button" data-a="addd">+ Vakgebied</button></div></div>';
   h+='<div class="card"><h2>Logo en gegevens</h2><div class="acts" style="margin-top:0">'+(S.logo?'<img src="'+S.logo+'" alt="Logo" style="height:40px;max-width:200px;object-fit:contain">':'')+'<label class="btn">'+(S.logo?'Logo wijzigen':'Logo plaatsen')+'<input type="file" id="logoFile" accept="image/*" style="display:none"></label>'+(S.logo?'<button class="btn danger" type="button" data-logodel="1">Logo verwijderen</button>':'')+'</div>';
@@ -1405,19 +1433,19 @@ function closeModal(){document.getElementById('modal').innerHTML='';}
 var DISC_KW={'Loodgieter':['cv','installat','installateur','warmtenet','ketel','radiator','leiding','afvoer','loodgieter'],'Timmerman':['bouwkundig','timmer'],'Tegelzetter':['tegel'],'Elektricien':['elektr','electr','groep','kabel','meterkast','aansluit','perilex','wcd']};
 function kwOf(d){ return (S.dkw&&S.dkw[d.id])||DISC_KW[d.name]||[d.name.toLowerCase()]; }
 function kwText(d){ return kwOf(d).join(', '); }
-function guessDisc(name){ var l=(name||'').toLowerCase(); if(!l) return ''; var hit=''; S.disciplines.some(function(d){ var kws=kwOf(d); if(kws.some(function(k){return l.indexOf(k)>=0;})){ hit=d.id; return true; } return false; }); return hit; }
+function guessDisc(name){ var l=(name||'').toLowerCase(); if(!l) return ''; var hit=''; discsOf(cpid()).some(function(d){ var kws=kwOf(d); if(kws.some(function(k){return l.indexOf(k)>=0;})){ hit=d.id; return true; } return false; }); return hit; }
 function openEdit(id,chapPreset){
   var p=curProj(); if(!p&&!id){V.tab='beheer';render();return;}
   var t=id?T(id):null;
-  var o=t||{id:'',projectId:p.id,chap:chapPreset||'',name:'',personId:S.people[0]?S.people[0].id:'',disc:'',perDay:8,note:'',days:{},thruHol:false,ms:''};
+  var o=t||{id:'',projectId:p.id,chap:chapPreset||'',name:'',personId:peopleOf(p.id)[0]?peopleOf(p.id)[0].id:'',disc:'',perDay:8,note:'',days:{},thruHol:false,ms:''};
   var st=tStart(o), cnt=tCount(o);
   var beginDef=st||F(today()<V.start?V.start:today()), durDef=cnt||(t?5:'');
   var chOpts=function(pid,sel){return '<option value="">Geen hoofdstuk</option>'+S.chapters.filter(function(c){return c.projectId===pid;}).map(function(c){return '<option value="'+c.id+'"'+(c.id===sel?' selected':'')+'>'+esc(c.name)+'</option>';}).join('');};
   var h='<div class="ov" id="ov"><form class="dlg" id="frm" novalidate><h2>'+(t?'Taak bewerken':'Nieuwe taak')+'</h2><div class="in"><div class="f">';
   h+='<label class="w2">Naam<span class="namew"><input type="text" id="e_name" value="'+esc(o.name)+'"><button type="button" class="btn mic" id="e_mic" title="Inspreken" aria-label="Naam inspreken">🎤</button></span></label>';
-  h+='<label>Verantwoordelijke<select id="e_pers"><option value="">Niemand</option>'+S.people.map(function(x){return '<option value="'+x.id+'"'+(x.id===o.personId?' selected':'')+'>'+esc(x.name)+'</option>';}).join('')+'</select></label>';
+  h+='<label>Verantwoordelijke<select id="e_pers"><option value="">Niemand</option>'+peopleOf(p.id).map(function(x){return '<option value="'+x.id+'"'+(x.id===o.personId?' selected':'')+'>'+esc(x.name)+'</option>';}).join('')+'</select></label>';
   h+='<label>Hoofdstuk<select id="e_chap">'+chOpts(o.projectId,o.chap)+'</select></label>';
-  h+='<label>Vakgebied<select id="e_disc"><option value="">Geen</option>'+S.disciplines.map(function(x){return '<option value="'+x.id+'"'+(x.id===o.disc?' selected':'')+'>'+esc(x.name)+'</option>';}).join('')+'</select></label>';
+  h+='<label>Vakgebied<select id="e_disc"><option value="">Geen</option>'+discsOf(p.id).map(function(x){return '<option value="'+x.id+'"'+(x.id===o.disc?' selected':'')+'>'+esc(x.name)+'</option>';}).join('')+'</select></label>';
   h+='<label>Begin<input type="date" id="e_begin" value="'+beginDef+'"></label>';
   h+='<label>Duur (werkdagen)<input type="number" id="e_dur" min="1" max="999" placeholder="leeg = geen blokjes" value="'+durDef+'"></label>';
   h+='<label>Einde<input type="text" id="e_end" value="" readonly tabindex="-1" style="background:var(--soft)"></label>';
@@ -1541,8 +1569,8 @@ function openBulk(){
   if(ids.length===1){openEdit(ids[0]);return;}
   var p=curProj();
   var h='<div class="ov" id="ov"><form class="dlg" id="frm"><h2>'+ids.length+' taken bewerken</h2><div class="in"><div class="f">';
-  h+='<label>Verantwoordelijke<select id="b_pers"><option value="-">Ongewijzigd</option><option value="">Niemand</option>'+S.people.map(function(x){return '<option value="'+x.id+'">'+esc(x.name)+'</option>';}).join('')+'</select></label>';
-  h+='<label>Vakgebied<select id="b_disc"><option value="-">Ongewijzigd</option><option value="">Geen</option>'+S.disciplines.map(function(x){return '<option value="'+x.id+'">'+esc(x.name)+'</option>';}).join('')+'</select></label>';
+  h+='<label>Verantwoordelijke<select id="b_pers"><option value="-">Ongewijzigd</option><option value="">Niemand</option>'+peopleOf(cpid()).map(function(x){return '<option value="'+x.id+'">'+esc(x.name)+'</option>';}).join('')+'</select></label>';
+  h+='<label>Vakgebied<select id="b_disc"><option value="-">Ongewijzigd</option><option value="">Geen</option>'+discsOf(cpid()).map(function(x){return '<option value="'+x.id+'">'+esc(x.name)+'</option>';}).join('')+'</select></label>';
   h+='<label>Hoofdstuk<select id="b_chap"><option value="-">Ongewijzigd</option><option value="">Geen hoofdstuk</option>'+S.chapters.filter(function(c){return c.projectId===p.id;}).map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join('')+'</select></label>';
   h+='<label>Uren per dag<input type="number" id="b_pd" min="0" max="16" step="0.5" placeholder="Ongewijzigd"></label>';
   h+='<label>Alles opschuiven (werkdagen)<input type="number" id="b_sh" step="1" placeholder="bijv. 5 of -3"></label>';
@@ -1819,13 +1847,13 @@ document.addEventListener('click',function(e){
   if(t.closest('[data-feest]')){ addFeest(); return; }
   if(t.closest('[data-imp]')){ doImport(document.getElementById('hImp').value); return; }
   if(t.closest('[data-delp],[data-a="addp"],[data-a="clear"],[data-a="demo"]')&&!isAdmin()) return;
-  if((el=t.closest('[data-delp]'))){ var pid=el.getAttribute('data-delp'); if(V.armed==='p'+pid){ V.armed=null; mut(function(){ S.projects=S.projects.filter(function(x){return x.id!==pid;}); S.tasks=S.tasks.filter(function(x){return x.projectId!==pid;}); S.chapters=S.chapters.filter(function(x){return x.projectId!==pid;}); }); } else { V.armed='p'+pid; render(); } return; }
+  if((el=t.closest('[data-delp]'))){ var pid=el.getAttribute('data-delp'); if(V.armed==='p'+pid){ V.armed=null; mut(function(){ S.projects=S.projects.filter(function(x){return x.id!==pid;}); S.tasks=S.tasks.filter(function(x){return x.projectId!==pid;}); S.chapters=S.chapters.filter(function(x){return x.projectId!==pid;}); S.people=S.people.filter(function(x){return x.projectId!==pid;}); S.disciplines=S.disciplines.filter(function(x){return x.projectId!==pid;}); }); } else { V.armed='p'+pid; render(); } return; }
   if((el=t.closest('[data-delu]'))){ var u=el.getAttribute('data-delu'); if(V.armed==='u'+u){ V.armed=null; mut(function(){ S.people=S.people.filter(function(x){return x.id!==u;}); S.tasks.forEach(function(x){ if(x.personId===u) x.personId=''; }); S.holidays=S.holidays.filter(function(x){return x.who!==u;}); }); } else { V.armed='u'+u; render(); } return; }
   if((el=t.closest('[data-deld]'))){ var did=el.getAttribute('data-deld'); mut(function(){ S.disciplines=S.disciplines.filter(function(d){return d.id!==did;}); S.tasks.forEach(function(x){ if(x.disc===did) x.disc=''; }); }); return; }
   a=(el=t.closest('[data-a]'))?el.getAttribute('data-a'):null;
   if(a==='addp'){ mut(function(){ var np={id:uid(),name:'Nieuw project',color:PAL[S.projects.length%PAL.length]}; S.projects.push(np); V.pid=np.id; }); }
-  else if(a==='addu'){ mut(function(){ S.people.push({id:uid(),name:'Nieuwe deelnemer',role:'',cap:40,color:PAL[(S.people.length+2)%PAL.length]}); }); }
-  else if(a==='addd'){ mut(function(){ S.disciplines.push({id:uid(),name:'Nieuw vakgebied',color:PAL[(S.disciplines.length+4)%PAL.length]}); }); }
+  else if(a==='addu'){ mut(function(){ S.people.push({id:uid(),projectId:cpid(),name:'Nieuwe deelnemer',role:'',cap:40,color:PAL[(S.people.length+2)%PAL.length]}); }); }
+  else if(a==='addd'){ mut(function(){ S.disciplines.push({id:uid(),projectId:cpid(),name:'Nieuw vakgebied',color:PAL[(S.disciplines.length+4)%PAL.length]}); }); }
   else if(a==='clear'){ if(V.armed==='clear'){ V.armed=null; mut(function(){ S={v:2,demo:false,projects:[],people:[],tasks:[],holidays:[],disciplines:defDisc(),chapters:[],logo:S.logo||null}; }); } else { V.armed='clear'; render(); } }
   else if(a==='demo'){ mut(function(){ S=sample(); S.demo=false; }); }
 });
