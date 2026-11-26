@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:37</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:45</p>
   </form>
 </div>
 <style>
@@ -725,9 +725,10 @@ function tEnd(t){var l=dlist(t);return l.length?l[l.length-1]:null;}
 function tCount(t){return Object.keys(t.days||{}).length;}
 function isD(v){return v===1||v===true||(!!v&&typeof v==='object'&&v.d===1);}
 function setD(t,ds,done){var v=t.days[ds];if(v&&typeof v==='object')v.d=done?1:0;else t.days[ds]=done?1:0;}
-function dHrs(t,ds){var v=t.days[ds];return (v&&typeof v==='object'&&v.h!=null&&v.h!=='')?+v.h:(+t.perDay||0);}
+function dHrs(t,ds){var v=t.days[ds];return (v&&typeof v==='object'&&v.h!=null&&v.h!=='')?+v.h:((+t.perDay||0)*((v&&typeof v==='object'&&(v.p==='o'||v.p==='m'))?0.5:1));}
+function dPart(t,ds){var v=t.days[ds];return (v&&typeof v==='object'&&(v.p==='o'||v.p==='m'))?v.p:'';}
 function dLoc(t,ds){var v=t.days[ds];return (v&&typeof v==='object'&&v.l)?String(v.l):'';}
-function fresh(v){return (v&&typeof v==='object')?{d:0,h:v.h,l:v.l}:0;}
+function fresh(v){return (v&&typeof v==='object')?{d:0,h:v.h,l:v.l,p:v.p}:0;}
 function tDone(t){var n=0;for(var k in t.days){if(isD(t.days[k]))n++;}return n;}
 function tProg(t){var c=tCount(t);return c?Math.round(tDone(t)/c*100):0;}
 function status(t){
@@ -1162,9 +1163,9 @@ function blocksHTML(t){
   runs(t).forEach(function(run,ri){
     run.forEach(function(ds,k){
       var i=idx[ds]; if(i==null) return;
-      var nt=(t.days[ds]&&typeof t.days[ds]==='object'&&t.days[ds].o)||'', ns=(t.days[ds]&&typeof t.days[ds]==='object'&&t.days[ds].s)||'', done=isD(t.days[ds]), late=!done&&ds<tdS, off=offFor(t,ds), loc=dLoc(t,ds), hr=dHrs(t,ds);
+      var nt=(t.days[ds]&&typeof t.days[ds]==='object'&&t.days[ds].o)||'', ns=(t.days[ds]&&typeof t.days[ds]==='object'&&t.days[ds].s)||'', done=isD(t.days[ds]), late=!done&&ds<tdS, off=offFor(t,ds), loc=dLoc(t,ds), hr=dHrs(t,ds), pt=dPart(t,ds);
       var inner=(ns||nt?'<i class="ob '+(ns||'n')+'"></i>':'')+(loc?'<span class="loc">'+esc(loc)+'</span>':'')+(t.hn?'<span class="hn">'+esc(t.hn)+'</span>':'')+(done?'<span class="ck'+(loc?' lo':'')+'">✓</span>':'')+(c>=22?'<span class="hr">'+hr+'</span>':'');
-      h+='<div class="blk'+(loc?' tx'+(String(loc).length>3?' tx2':''):'')+(disc(t.disc)?'':' nod')+(V.rsel.indexOf(t.id+'|'+run[0])>=0?' rsel':'')+(done?' done':'')+(late?' late':'')+(off?' off':'')+'" data-t="'+t.id+'" data-d="'+ds+'" data-r="'+ri+'" data-dn="'+esc(fullD(P(ds))+' · '+t.name+' · '+hr+' uur'+(loc?' · '+loc:'')+(nt?' · opm: '+nt:''))+'" style="left:'+(i*c+2)+'px;--c:'+esc(col)+'">'+
+      h+='<div class="blk'+(loc?' tx'+(String(loc).length>3?' tx2':''):'')+(disc(t.disc)?'':' nod')+(V.rsel.indexOf(t.id+'|'+run[0])>=0?' rsel':'')+(done?' done':'')+(late?' late':'')+(off?' off':'')+'" data-t="'+t.id+'" data-d="'+ds+'" data-r="'+ri+'" data-dn="'+esc(fullD(P(ds))+' · '+t.name+(pt?(pt==='o'?' · ochtend':' · middag'):'')+' · '+hr+' uur'+(loc?' · '+loc:'')+(nt?' · opm: '+nt:''))+'" style="left:'+(i*c+2+(pt==='m'?c/2:0))+'px;'+(pt?'width:'+(c/2-3)+'px;':'')+'--c:'+esc(col)+'">'+
         (k===0?'<i class="hd l" data-side="l"></i>':'')+inner+(k===run.length-1?'<i class="hd r" data-side="r"></i>':'')+'</div>';
     });
   });
@@ -1195,7 +1196,7 @@ function viewPlanning(){
   h+='<div class="spacer"></div><button class="btn" type="button" data-bedit="1" '+(n?'':'disabled')+'>✎ Bewerk</button><button class="btn" type="button" data-bcopy="1" '+(n?'':'disabled')+'>⧉ Kopie</button><button class="btn danger'+(V.armed==='bdel'?' armed':'')+'" type="button" data-bdel="1" '+(n?'':'disabled')+'>🗑 '+(V.armed==='bdel'?'Zeker? ('+n+')':'Verwijder')+'</button></div>';
   }
   h+='<details class="mobmore"'+(window.innerWidth>=700?' open':'')+'><summary>Meer opties</summary><div class="mobbody">';
-  h+='<div class="tools hideful">'+periodTools(!ED)+'</div><div class="tools">'+'<div class="seg" role="group" aria-label="Breedte activiteiten">'+'<button type="button" data-lw="100" title="Standaardbreedte">↺ Standaard</button></div>'+'<div class="seg" role="group" aria-label="Zoom">'+[150,120,100,90,80,70,60,50].map(function(z){return '<button type="button" data-zoom="'+z+'" aria-pressed="'+(V.zoom===z)+'">'+z+'%</button>';}).join('')+'</div></div>'+'</div></div></details>';
+  h+='<div class="tools hideful">'+periodTools(!ED)+'</div><div class="tools">'+'<div class="seg" role="group" aria-label="Breedte activiteiten">'+'<button type="button" data-lw="100" title="Standaardbreedte">↺ Standaard</button></div>'+'<div class="seg" role="group" aria-label="Zoom">'+[200,150,120,100,90,50].map(function(z){return '<button type="button" data-zoom="'+z+'" aria-pressed="'+(V.zoom===z)+'">'+z+'%</button>';}).join('')+'</div></div>'+'</div></div></details>';
   if(ED&&V.mode==='move') h+='<div class="tools pastebar">'+(V.rsel.length?'<b>'+V.rsel.length+' stuk(ken) geselecteerd</b><div class="seg"><button type="button" data-rs="-5">◀ week</button><button type="button" data-rs="-1">◀ dag</button><button type="button" data-rs="1">dag ▶</button><button type="button" data-rs="5">week ▶</button></div><span style="display:inline-flex;gap:6px;align-items:center"><input type="text" id="rsTxt" placeholder="Tekst, bijv. 44" style="width:120px" aria-label="Tekst voor de geselecteerde balken" enterkeyhint="done"><button class="btn" type="button" data-rstxt="1">Zet in balken</button></span><button class="btn" type="button" data-addrfill="1">🏠 Adressen vullen…</button><button class="btn" type="button" data-bcopysel="1">📋 Kopiëren</button><button class="btn" type="button" data-tplsave="1">💾 Bewaar als sjabloon</button><button class="btn" type="button" data-rsall="1">Hele regel(s)</button><button class="btn" type="button" data-rsclear="1">✕ Wis selectie</button>':'<span style="color:var(--muted)">Tik op balken om ze te selecteren (oranje rand). Shift + klik selecteert alle balken van die regel. Sleep daarna, gebruik de pijlen, of kies Kopiëren.</span>')+'<button class="btn" type="button" data-tpls="1">📁 Sjablonen'+((S.templates||[]).length?' ('+S.templates.length+')':'')+'</button></div>';
   if(V.bclip) h+='<div class="tools pastebar"><b>'+(V.bclip.tpl?'Sjabloon “'+esc(V.bclip.tpl)+'”: '+V.bclip.n+' dag(en).':V.bclip.n+' dag(en) gekopieerd.')+'</b><span style="color:var(--muted)">'+(V.bclip.one?'Tik op de dag en regel waar de eerste dag moet komen.':'Tik op de dag waar de eerste dag moet komen; ze blijven op hun eigen regels.')+' Je kunt vaker plakken.</span><button class="btn" type="button" data-bclear="1">✓ Klaar</button></div>';
   if(V.tclip) h+='<div class="tools pastebar"><b>'+V.tclip.length+' regel(s) gekopieerd.</b><span style="color:var(--muted)">Tik in de planning op de dag en regel waar ze moeten komen.</span><button class="btn" type="button" data-tclear="1">✓ Klaar</button></div>';
@@ -1529,7 +1530,7 @@ function openPostit(tid,ds,r){
   var h='<div class="ov" id="ov"><form class="dlg" id="frm" style="max-width:420px"><h2>Dag · '+esc(fullD(P(ds)))+'</h2><div class="in">';
   h+='<p style="margin:0 0 12px;font-weight:600">'+esc(t.name)+'</p><div class="f" style="grid-template-columns:1fr 1fr">';
   h+='<label class="w">Tekst in de balk<input type="text" id="p_l" list="p_locs" maxlength="40" value="'+esc(dLoc(t,ds))+'" placeholder="bijv. 12, Blok A, woning 3" style="font-size:17px;font-weight:600"><datalist id="p_locs">'+Object.keys(locs).sort().map(function(l){return '<option value="'+esc(l)+'">';}).join('')+'</datalist></label>';
-  h+='<label>Uren deze dag<input type="number" id="p_h" min="0" max="24" step="0.5" value="'+esc(hv)+'" placeholder="'+(+t.perDay||0)+' (standaard)"></label><label></label>';
+  h+='<label>Uren deze dag<input type="number" id="p_h" min="0" max="24" step="0.5" value="'+esc(hv)+'" placeholder="'+(+t.perDay||0)+' (standaard)"></label><label>Deel van de dag<select id="p_p"><option value="">Hele dag</option><option value="o"'+(dPart(t,ds)==='o'?' selected':'')+'>Ochtend</option><option value="m"'+(dPart(t,ds)==='m'?' selected':'')+'>Middag</option></select></label>';
   var curS=(v&&typeof v==='object'&&v.s)||'';
   h+='<div class="w"><span style="font-size:12px;color:var(--muted)">Sticker (alleen deze dag)</span><div class="seg">'+[['','Geen'],['geel','! Geel'],['rood','! Rood']].map(function(x){return '<button type="button" data-st="'+x[0]+'" aria-pressed="'+(curS===x[0])+'">'+x[1]+'</button>';}).join('')+'</div><input type="hidden" id="p_s" value="'+curS+'"></div>';
   h+='<label class="w">Notitie (alleen deze dag)<textarea id="p_o" rows="2" placeholder="bijv. wacht op levering">'+esc((v&&typeof v==='object'&&v.o)||'')+'</textarea></label>';
@@ -1546,13 +1547,13 @@ function openPostit(tid,ds,r){
   $('p_del').addEventListener('click',function(){ mut(function(){ delete t.days[ds]; }); closeModal(); });
   $('frm').addEventListener('submit',function(e){
     e.preventDefault();
-    var hh=$('p_h').value.trim(), ll=$('p_l').value.trim(), dd=$('p_d').checked, sc=$('p_scope').value, oo=$('p_o').value.trim(), ss=$('p_s').value;
+    var pp=$('p_p').value, hh=$('p_h').value.trim(), ll=$('p_l').value.trim(), dd=$('p_d').checked, sc=$('p_scope').value, oo=$('p_o').value.trim(), ss=$('p_s').value;
     var list=sc==='day'?[ds]:(sc==='run'?(runs(t)[r]||[ds]):dlist(t));
     mut(function(){ list.forEach(function(k){
       var cur=t.days[k], o=(cur&&typeof cur==='object')?cur:{d:isD(cur)?1:0};
-      o.h=hh===''?null:+hh; o.l=ll;
+      o.h=hh===''?null:+hh; o.l=ll; o.p=pp;
       if(k===ds){ o.d=dd?1:0; o.o=oo; o.s=ss; }
-      if(o.h==null&&!o.l&&!o.o&&!o.s) t.days[k]=o.d; else t.days[k]=o;
+      if(o.h==null&&!o.l&&!o.o&&!o.s&&!o.p) t.days[k]=o.d; else t.days[k]=o;
     }); });
     closeModal();
   });
@@ -1687,7 +1688,7 @@ function textSel(txt){
   V.rsel.forEach(function(key){ var p=key.split('|'), t=T(p[0]); if(!t) return;
     runs(t).forEach(function(run){ if(run[0]!==p[1]) return; run.forEach(function(k){
       var cur=t.days[k], o=(cur&&typeof cur==='object')?cur:{d:isD(cur)?1:0}; o.l=txt;
-      if(o.h==null&&!o.l&&!o.o&&!o.s) t.days[k]=o.d; else t.days[k]=o; }); });
+      if(o.h==null&&!o.l&&!o.o&&!o.s&&!o.p) t.days[k]=o.d; else t.days[k]=o; }); });
   });
 }
 function selDays(){
@@ -1704,7 +1705,7 @@ function addrList(o){
   for(var i=0;i<n;i++){ var nr=st+i*sp; out.push((o.straat?o.straat.trim()+' ':'')+nr+(o.toev||'')); }
   return out;
 }
-function setLbl(t,k,txt){ var cur=t.days[k], o=(cur&&typeof cur==='object')?cur:{d:isD(cur)?1:0}; o.l=txt; if(o.h==null&&!o.l&&!o.o&&!o.s) t.days[k]=o.d; else t.days[k]=o; }
+function setLbl(t,k,txt){ var cur=t.days[k], o=(cur&&typeof cur==='object')?cur:{d:isD(cur)?1:0}; o.l=txt; if(o.h==null&&!o.l&&!o.o&&!o.s&&!o.p) t.days[k]=o.d; else t.days[k]=o; }
 function openAddr(){
   var days=selDays(); if(!days.length) return;
   var h='<div class="ov" id="ov"><form class="dlg" id="frm" style="max-width:520px"><h2>Adressen in balken zetten</h2><div class="in">';
