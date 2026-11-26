@@ -1693,15 +1693,16 @@ app.addEventListener('pointerdown',function(e){
     if(!(pv&&pv.tid===tid&&pv.c===c0&&nowT-pv.t<500)) return; /* eerste tik: nog niet kleuren, wacht op tweede tik */
     V.dtap=null; snap(); G={k:'draw',tid:tid,geo:gg,last:c0}; paint(tid,gg.C[c0]); cap(e); e.preventDefault(); return; }
   if(blk&&(V.mode==='normal'||V.mode==='postit')){ var gg2={k:'tick',tid:tid,ds:blk.getAttribute('data-d'),r:+blk.getAttribute('data-r'),x0:e.clientX,y0:e.clientY,moved:false}; G=gg2;
-    if(V.mode==='normal') gg2.timer=setTimeout(function(){ if(G===gg2&&!gg2.moved){ G=null; openPostit(gg2.tid,gg2.ds,gg2.r); } },550);
+    if(V.mode==='normal') gg2.timer=setTimeout(function(){ if(G===gg2&&!gg2.moved){ G=null; openPostit(gg2.tid,gg2.ds,gg2.r); if(navigator.vibrate) navigator.vibrate(40); } },2000);
     return; }
   if(blk&&V.mode==='move'){ var side=t.closest('.hd'); G={k:side?'resize':'move',side:side?side.getAttribute('data-side'):null,tid:tid,ds:blk.getAttribute('data-d'),r:+blk.getAttribute('data-r'),x0:e.clientX,geo:gg,dd:0,moved:false}; cap(e); e.preventDefault(); return; }
   G={k:'tap',tid:tid,geo:gg,x0:e.clientX,y0:e.clientY,moved:false};
+  if(V.mode==='normal'&&!V.tclip){ var tg=G, tds=F(gg.C[colAt(gg,e.clientX)]); tg.timer=setTimeout(function(){ if(G!==tg||tg.moved) return; G=null; mut(function(){ var tk=T(tg.tid); if(tk&&!(tds in tk.days)&&!hardOff(tk,tds)) tk.days[tds]=0; }); if(navigator.vibrate) navigator.vibrate(40); },2000); }
 });
 app.addEventListener('pointermove',function(e){
   if(!G) return;
   if(G.k==='tick'){ if(Math.abs(e.clientX-G.x0)>8||Math.abs(e.clientY-G.y0)>8){ G.moved=true; clearTimeout(G.timer); } return; }
-  if(G.k==='tap'){ if(Math.abs(e.clientX-G.x0)>8||Math.abs(e.clientY-G.y0)>8) G.moved=true; return; }
+  if(G.k==='tap'){ if(Math.abs(e.clientX-G.x0)>8||Math.abs(e.clientY-G.y0)>8){ G.moved=true; clearTimeout(G.timer); } return; }
   if(G.k==='row'){ if(Math.abs(e.clientY-G.y0)>4){ G.moved=true; G.el.style.opacity='.4'; G.el.style.transform='translateY('+(e.clientY-G.y0)+'px)'; G.el.style.position='relative'; G.el.style.zIndex='9'; dropLine(e.clientY,G.id); autoScroll(e.clientY); } return; }
   if(G.k==='erase'){ eraseAt(e.clientX,e.clientY); return; }
   if(G.k==='dtap'){ if(Math.abs(e.clientX-G.x0)<=12&&Math.abs(e.clientY-G.y0)<=12) return; clearTimeout(G.timer); G.k='draw'; snap(); G.last=G.c0; paint(G.tid,G.geo.C[G.c0]); }
@@ -1715,8 +1716,8 @@ app.addEventListener('pointerup',function(e){
   if(g.k==='row'){ hideDrop(); g.el.style.opacity=''; g.el.style.transform=''; g.el.style.zIndex=''; if(g.moved) mut(function(){moveRow(g.id,e.clientY);}); return; }
   if(g.k==='dtap'){ clearTimeout(g.timer); openEdit(g.tid); return; }
   if(g.k==='erase'||g.k==='draw'){ if(!g.changed) UNDO.pop(); else { normAll(); S.demo=false; save(); } render(); return; }
-  if(g.k==='tick'){ clearTimeout(g.timer); if(g.moved) return; if(V.mode==='postit'){ openPostit(g.tid,g.ds,g.r); return; } mut(function(){ var t=T(g.tid); if(t&&(g.ds in t.days)) setD(t,g.ds,!isD(t.days[g.ds])); }); return; }
-  if(g.k==='tap'){ if(!g.moved&&V.tclip){ var ci=colAt(g.geo,e.clientX); mut(function(){pasteRows(g.tid,g.geo.C[ci]);}); } return; }
+  if(g.k==='tick'){ clearTimeout(g.timer); if(g.moved) return; if(V.mode==='postit'){ openPostit(g.tid,g.ds,g.r); return; } return; }
+  if(g.k==='tap'){ clearTimeout(g.timer); if(!g.moved&&V.tclip){ var ci=colAt(g.geo,e.clientX); mut(function(){pasteRows(g.tid,g.geo.C[ci]);}); } return; }
   if(g.k==='move'){
     if(g.tri&&!g.moved){ render(); return; }
     if(!g.moved){ var kk=runKeyOf(T(g.tid),g.r); if(kk){ var ix=V.rsel.indexOf(kk); if(ix>=0) V.rsel.splice(ix,1); else V.rsel.push(kk); } render(); return; }
