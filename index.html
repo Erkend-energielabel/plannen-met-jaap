@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 09:12</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 09:13</p>
   </form>
 </div>
 <style>
@@ -643,10 +643,12 @@ if(window.claude&&claude.use){
 
 /* ---------- ongedaan maken ---------- */
 var UNDO=[], REDO=[];
-function snap(){ UNDO.push(JSON.stringify(S)); if(UNDO.length>50) UNDO.shift(); REDO=[]; }
+function snap(){ var lg=S.log; S.log=undefined; var j=JSON.stringify(S); S.log=lg; UNDO.push(j); if(UNDO.length>50) UNDO.shift(); REDO=[]; }
 function normAll(){ S.tasks.forEach(function(t){ var g=0, bad; while(g<60){ bad=dlist(t).filter(function(ds){return hardOff(t,ds);})[0]; if(!bad) break; pushFrom(t,bad); g++; } }); }
-function mut(fn){ snap(); fn(); normAll(); S.demo=false; save(); render(); }
-function restoreSnap(j){ var cur=S.access, o=JSON.parse(j); o.access=cur; return o; }
+function logAct(lbl){ if(!ME.id) return; if(!S.log) S.log=[]; S.log.push({t:Date.now(),u:ME.id,a:lbl||'wijziging'}); if(S.log.length>1500) S.log.splice(0,S.log.length-1500); }
+function fmtDT(ms){ var d=new Date(ms); var z=function(n){return ('0'+n).slice(-2);}; return z(d.getDate())+'-'+z(d.getMonth()+1)+'-'+d.getFullYear()+' '+z(d.getHours())+':'+z(d.getMinutes()); }
+function mut(fn,lbl){ snap(); fn(); normAll(); S.demo=false; logAct(lbl); save(); render(); }
+function restoreSnap(j){ var cur=S.access, lg=S.log, o=JSON.parse(j); o.access=cur; o.log=lg; return o; }
 function undo(){ if(!UNDO.length) return; REDO.push(JSON.stringify(S)); S=restoreSnap(UNDO.pop()); save(); render(); }
 function redo(){ if(!REDO.length) return; UNDO.push(JSON.stringify(S)); S=restoreSnap(REDO.pop()); save(); render(); }
 
@@ -1331,6 +1333,14 @@ function viewToegang(){
     h+='<button type="button" class="xdel'+(V.armed==='m'+m.uid?' armed':'')+'" data-mdel="'+esc(m.uid)+'" aria-label="Toegang intrekken">'+(V.armed==='m'+m.uid?'✓?':'×')+'</button></div>';
     h+='<div class="f" style="grid-template-columns:1fr 1fr;margin:6px 0"><label>Naam<input type="text" data-mnaam="'+esc(m.uid)+'" value="'+esc(m.naam||'')+'" placeholder="Naam van deze persoon"></label><label>Bedrijf<input type="text" data-mbedr="'+esc(m.uid)+'" value="'+esc(m.bedrijf!==undefined?m.bedrijf:(m.note||''))+'" placeholder="Bijv. bedrijfsnaam"></label></div>';
     if(m.role==='beheerder') h+='<p class="hint">Ziet alle projecten.</p>';
+    var lg=(S.log||[]).filter(function(x){return x.u===m.uid;}), cnt={};
+    lg.forEach(function(x){ cnt[x.a]=(cnt[x.a]||0)+1; });
+    var top=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a];}).slice(0,4).map(function(k){return cnt[k]+' × '+esc(k);}).join(', ');
+    var last=lg.length?lg[lg.length-1].t:0;
+    h+='<p class="hint" style="margin:6px 0">Toegang sinds: <b>'+(m.since?esc(fmtDT(m.since)):'onbekend (al eerder toegevoegd)')+'</b> · Wijzigingen: <b>'+lg.length+'</b>'+(lg.length?' · laatste: '+esc(fmtDT(last))+(top?' · '+top:''):' · nog geen activiteit vastgelegd')+'</p>';
+    h+='<button type="button" class="btn" data-mlog="'+esc(m.uid)+'">'+(V.mlog===m.uid?'Logboek verbergen':'Logboek tonen')+'</button>';
+    if(V.mlog===m.uid){ var recent=lg.slice(-25).reverse();
+      h+='<div class="acc-pr" style="flex-direction:column;align-items:stretch;max-height:220px;overflow:auto;margin-top:6px">'+(recent.length?recent.map(function(x){return '<div class="hint" style="margin:2px 0">'+esc(fmtDT(x.t))+' · '+esc(x.a)+'</div>';}).join(''):'<div class="hint">Nog niets vastgelegd.</div>')+'</div>'; }
     if(m.role!=='beheerder'){ h+='<label style="display:block;margin:8px 0">Wat ziet deze persoon<select data-mview="'+esc(m.uid)+'" aria-label="Wat ziet deze persoon"><option value="alles"'+(m.view!=='mijn'?' selected':'')+'>Alle vakgebieden</option><option value="mijn"'+(m.view==='mijn'?' selected':'')+'>Alleen zijn eigen vakgebied</option></select></label>'; }
     if(m.role!=='beheerder'){ h+='<p class="hint" style="margin:8px 0 4px">Vakgebieden van deze persoon</p><div class="acc-pr">'+S.disciplines.map(function(d){ return '<label class="chk"><input type="checkbox" data-mdisc="'+esc(m.uid)+'" value="'+d.id+'"'+((m.discs||[]).indexOf(d.id)>=0?' checked':'')+'> '+esc(d.name)+'</label>'; }).join('')+'</div>'; }
     if(m.role!=='beheerder') h+='<div class="acc-pr">'+S.projects.map(function(p){ return '<label class="chk"><input type="checkbox" data-mproj="'+esc(m.uid)+'" value="'+p.id+'"'+((m.projects||[]).indexOf(p.id)>=0?' checked':'')+'> '+esc((p.nr?p.nr+' · ':'')+p.name)+'</label>'; }).join('')+'</div>';
@@ -1698,7 +1708,7 @@ app.addEventListener('pointerdown',function(e){
     return; }
   if(blk&&V.mode==='move'){ var side=t.closest('.hd'); G={k:side?'resize':'move',side:side?side.getAttribute('data-side'):null,tid:tid,ds:blk.getAttribute('data-d'),r:+blk.getAttribute('data-r'),x0:e.clientX,geo:gg,dd:0,moved:false}; cap(e); e.preventDefault(); return; }
   G={k:'tap',tid:tid,geo:gg,x0:e.clientX,y0:e.clientY,moved:false};
-  if(V.mode==='normal'&&!V.tclip){ var tg=G, tds=F(gg.C[colAt(gg,e.clientX)]); tg.timer=setTimeout(function(){ if(G!==tg||tg.moved) return; G=null; mut(function(){ var tk=T(tg.tid); if(tk&&!(tds in tk.days)&&!hardOff(tk,tds)) tk.days[tds]=0; }); if(navigator.vibrate) navigator.vibrate(40); },2000); }
+  if(V.mode==='normal'&&!V.tclip){ var tg=G, tds=F(gg.C[colAt(gg,e.clientX)]); tg.timer=setTimeout(function(){ if(G!==tg||tg.moved) return; G=null; mut(function(){ var tk=T(tg.tid); if(tk&&!(tds in tk.days)&&!hardOff(tk,tds)) tk.days[tds]=0; },'balk gezet'); if(navigator.vibrate) navigator.vibrate(40); },2000); }
 });
 app.addEventListener('pointermove',function(e){
   if(!G) return;
@@ -1716,14 +1726,14 @@ app.addEventListener('pointerup',function(e){
   var g=G; G=null; if(!g) return;
   if(g.k==='row'){ hideDrop(); g.el.style.opacity=''; g.el.style.transform=''; g.el.style.zIndex=''; if(g.moved) mut(function(){moveRow(g.id,e.clientY);}); return; }
   if(g.k==='dtap'){ clearTimeout(g.timer); openEdit(g.tid); return; }
-  if(g.k==='erase'||g.k==='draw'){ if(!g.changed) UNDO.pop(); else { normAll(); S.demo=false; save(); } render(); return; }
+  if(g.k==='erase'||g.k==='draw'){ if(!g.changed) UNDO.pop(); else { normAll(); S.demo=false; logAct(g.k==='draw'?'vakje gekleurd':'vakje gewist'); save(); } render(); return; }
   if(g.k==='tick'){ clearTimeout(g.timer); if(g.moved) return; if(V.mode==='postit'){ openPostit(g.tid,g.ds,g.r); return; } return; }
   if(g.k==='tap'){ clearTimeout(g.timer); if(!g.moved&&V.tclip){ var ci=colAt(g.geo,e.clientX); mut(function(){pasteRows(g.tid,g.geo.C[ci]);}); } return; }
   if(g.k==='move'){
     if(g.tri&&!g.moved){ render(); return; }
     if(!g.moved){ var kk=runKeyOf(T(g.tid),g.r); if(kk){ var ix=V.rsel.indexOf(kk); if(ix>=0) V.rsel.splice(ix,1); else V.rsel.push(kk); } render(); return; }
     if(g.dd===0){ render(); return; }
-    mut(function(){applyMove(g);}); return;
+    mut(function(){applyMove(g);},'verplaatst'); return;
   }
   if(g.k==='resize'){ if(g.dd!==0) mut(function(){applyResize(g);}); else render(); return; }
 });
@@ -1768,18 +1778,19 @@ document.addEventListener('click',function(e){
         var pr0=curProj(), url0=window.APP_URL||location.href.split('?')[0];
         V.accMsg=mail+' had al een inlog en staat weer in de lijst. Zijn wachtwoord is niet veranderd.';
         V.accShare={mail:mail,bestond:true,tekst:'Hoi,\n\nJe hebt weer toegang tot de planning'+(pr0?' van '+(pr0.nr?pr0.nr+' ':'')+pr0.name:'')+' in Plannen met Jaap.\n\nOpen de app: '+url0+'\nE-mailadres: '+mail+'\nWachtwoord: je bestaande wachtwoord. Kwijt? Tik op het inlogscherm op Wachtwoord vergeten.\n\nTip: zet de app op je beginscherm, dan heb je hem altijd bij de hand.'};
-        mut(function(){ members().push({uid:mail,role:'uitvoerder',projects:V.pid?[V.pid]:[],discs:[],note:'',view:'alles'}); });
+        mut(function(){ members().push({uid:mail,role:'uitvoerder',projects:V.pid?[V.pid]:[],discs:[],note:'',view:'alles',since:Date.now(),by:ME.id||''}); });
         return;
       }
       if(!r||!r.ok){ if(nmsg) nmsg.textContent=(r&&r.fout)||'Aanmaken mislukt.'; return; }
       V.accMsg='Inlog aangemaakt voor '+mail+'. Kies hieronder zijn rol en projecten.';
       var pr=curProj(), url=window.APP_URL||location.href.split('?')[0];
       V.accShare={mail:mail,tekst:'Hoi,\n\nJe hebt toegang tot de planning'+(pr?' van '+(pr.nr?pr.nr+' ':'')+pr.name:'')+' in Plannen met Jaap.\n\nOpen de app: '+url+'\nE-mailadres: '+mail+'\nWachtwoord: '+pw+'\n\nLog in met je e-mailadres en wachtwoord. Daarna kun je je wachtwoord zelf wijzigen met de knop Wachtwoord bovenin.\n\nTip: zet de app op je beginscherm, dan heb je hem altijd bij de hand.'};
-      mut(function(){ members().push({uid:mail,role:'uitvoerder',projects:V.pid?[V.pid]:[],discs:[],note:'',view:'alles'}); });
+      mut(function(){ members().push({uid:mail,role:'uitvoerder',projects:V.pid?[V.pid]:[],discs:[],note:'',view:'alles',since:Date.now(),by:ME.id||''}); });
     },function(){ el.disabled=false; if(nmsg) nmsg.textContent='Aanmaken mislukt.'; });
     return;
   }
-  if((el=t.closest('[data-addm]'))){ if(!isAdmin()) return; var nu=el.getAttribute('data-addm'); mut(function(){ members().push({uid:nu,role:'uitvoerder',projects:V.pid?[V.pid]:[]}); }); return; }
+  if((el=t.closest('[data-addm]'))){ if(!isAdmin()) return; var nu=el.getAttribute('data-addm'); mut(function(){ members().push({uid:nu,role:'uitvoerder',projects:V.pid?[V.pid]:[],since:Date.now(),by:ME.id||''}); }); return; }
+  if((el=t.closest('[data-mlog]'))){ if(!isAdmin()) return; var lu=el.getAttribute('data-mlog'); V.mlog=(V.mlog===lu?null:lu); render(); return; }
   if((el=t.closest('[data-mdel]'))){ if(!isAdmin()) return; var mu=el.getAttribute('data-mdel'); if(V.armed==='m'+mu){ V.armed=null; mut(function(){ S.access.members=members().filter(function(m){return m.uid!==mu;}); }); } else { V.armed='m'+mu; render(); setTimeout(function(){ if(V.armed==='m'+mu){ V.armed=null; render(); } },4000); } return; }
   if((el=t.closest('[data-tab]'))){ if(el.getAttribute('data-tab')!=='toegang') V.accShare=null; V.tab=el.getAttribute('data-tab'); V.armed=null; V.expMsg=''; render(); return; }
   if((el=t.closest('[data-mode]'))){ if(isUitv()&&['normal','postit'].indexOf(el.getAttribute('data-mode'))<0) return; var nm2=el.getAttribute('data-mode'); V.mode=(V.mode===nm2&&nm2!=='normal')?'normal':nm2; render(); return; }
