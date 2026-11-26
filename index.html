@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:30</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:32</p>
   </form>
 </div>
 <style>
@@ -1147,10 +1147,11 @@ function fitGrid(){
   if(!V.full) h=Math.max(h,Math.floor(vh*0.6));
   g.style.height=h+'px';
 }
-function periodTools(){
+function periodTools(compact){
   var h='<div class="seg" role="group" aria-label="Periode">';
   [[6,'6 wk'],[12,'12 wk'],[26,'½ jaar'],[52,'1 jaar'],[156,'3 jaar']].forEach(function(w){h+='<button type="button" data-weeks="'+w[0]+'" aria-pressed="'+(V.weeks===w[0])+'">'+w[1]+'</button>';});
   h+='</div><div class="seg"><button type="button" data-nav="-1" aria-label="Week terug">◀</button><button type="button" data-nav="0">Vandaag</button><button type="button" data-nav="1" aria-label="Week vooruit">▶</button></div>';
+  if(compact) return h;
   var iy=new Date(V.start+3*DAY).getUTCFullYear();
   h+='<span class="seg" style="padding:0 8px;align-items:center;gap:6px;font-size:12px;color:var(--muted)">Start week <input type="number" id="pWk" min="1" max="53" value="'+wkNr(V.start)+'" style="width:58px;min-height:30px"> van <input type="number" id="pYr" min="2000" max="2100" value="'+iy+'" style="width:74px;min-height:30px"></span>';
   h+='<span class="seg" style="padding:0 8px;align-items:center;gap:6px;font-size:12px;color:var(--muted)">Duur <input type="number" id="pWeeks" min="1" max="260" value="'+V.weeks+'" style="width:62px;min-height:30px"> weken · t/m wk '+wkNr(V.start+(V.weeks-1)*7*DAY)+'</span>';
@@ -1194,7 +1195,7 @@ function viewPlanning(){
   h+='<div class="spacer"></div><button class="btn" type="button" data-bedit="1" '+(n?'':'disabled')+'>✎ Bewerk</button><button class="btn" type="button" data-bcopy="1" '+(n?'':'disabled')+'>⧉ Kopie</button><button class="btn danger'+(V.armed==='bdel'?' armed':'')+'" type="button" data-bdel="1" '+(n?'':'disabled')+'>🗑 '+(V.armed==='bdel'?'Zeker? ('+n+')':'Verwijder')+'</button></div>';
   }
   h+='<details class="mobmore"'+(window.innerWidth>=700?' open':'')+'><summary>Meer opties</summary><div class="mobbody">';
-  h+='<div class="tools hideful">'+periodTools()+'</div><div class="tools">'+'<div class="seg" role="group" aria-label="Breedte activiteiten">'+'<button type="button" data-lw="100" title="Standaardbreedte">↺ Standaard</button></div>'+'<div class="seg" role="group" aria-label="Zoom">'+[100,90,80,70,60,50].map(function(z){return '<button type="button" data-zoom="'+z+'" aria-pressed="'+(V.zoom===z)+'">'+z+'%</button>';}).join('')+'</div></div>'+'</div></div></details>';
+  h+='<div class="tools hideful">'+periodTools(!ED)+'</div><div class="tools">'+'<div class="seg" role="group" aria-label="Breedte activiteiten">'+'<button type="button" data-lw="100" title="Standaardbreedte">↺ Standaard</button></div>'+'<div class="seg" role="group" aria-label="Zoom">'+[100,90,80,70,60,50].map(function(z){return '<button type="button" data-zoom="'+z+'" aria-pressed="'+(V.zoom===z)+'">'+z+'%</button>';}).join('')+'</div></div>'+'</div></div></details>';
   if(ED&&V.mode==='move') h+='<div class="tools pastebar">'+(V.rsel.length?'<b>'+V.rsel.length+' stuk(ken) geselecteerd</b><div class="seg"><button type="button" data-rs="-5">◀ week</button><button type="button" data-rs="-1">◀ dag</button><button type="button" data-rs="1">dag ▶</button><button type="button" data-rs="5">week ▶</button></div><span style="display:inline-flex;gap:6px;align-items:center"><input type="text" id="rsTxt" placeholder="Tekst, bijv. 44" style="width:120px" aria-label="Tekst voor de geselecteerde balken" enterkeyhint="done"><button class="btn" type="button" data-rstxt="1">Zet in balken</button></span><button class="btn" type="button" data-addrfill="1">🏠 Adressen vullen…</button><button class="btn" type="button" data-bcopysel="1">📋 Kopiëren</button><button class="btn" type="button" data-tplsave="1">💾 Bewaar als sjabloon</button><button class="btn" type="button" data-rsall="1">Hele regel(s)</button><button class="btn" type="button" data-rsclear="1">✕ Wis selectie</button>':'<span style="color:var(--muted)">Tik op balken om ze te selecteren (oranje rand). Shift + klik selecteert alle balken van die regel. Sleep daarna, gebruik de pijlen, of kies Kopiëren.</span>')+'<button class="btn" type="button" data-tpls="1">📁 Sjablonen'+((S.templates||[]).length?' ('+S.templates.length+')':'')+'</button></div>';
   if(V.bclip) h+='<div class="tools pastebar"><b>'+(V.bclip.tpl?'Sjabloon “'+esc(V.bclip.tpl)+'”: '+V.bclip.n+' dag(en).':V.bclip.n+' dag(en) gekopieerd.')+'</b><span style="color:var(--muted)">'+(V.bclip.one?'Tik op de dag en regel waar de eerste dag moet komen.':'Tik op de dag waar de eerste dag moet komen; ze blijven op hun eigen regels.')+' Je kunt vaker plakken.</span><button class="btn" type="button" data-bclear="1">✓ Klaar</button></div>';
   if(V.tclip) h+='<div class="tools pastebar"><b>'+V.tclip.length+' regel(s) gekopieerd.</b><span style="color:var(--muted)">Tik in de planning op de dag en regel waar ze moeten komen.</span><button class="btn" type="button" data-tclear="1">✓ Klaar</button></div>';
