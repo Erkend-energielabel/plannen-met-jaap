@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:17</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:20</p>
   </form>
 </div>
 <style>
@@ -1191,7 +1191,7 @@ function viewPlanning(){
   h+='<div class="spacer"></div><button class="btn" type="button" data-bedit="1" '+(n?'':'disabled')+'>✎ Bewerk</button><button class="btn" type="button" data-bcopy="1" '+(n?'':'disabled')+'>⧉ Kopie</button><button class="btn danger'+(V.armed==='bdel'?' armed':'')+'" type="button" data-bdel="1" '+(n?'':'disabled')+'>🗑 '+(V.armed==='bdel'?'Zeker? ('+n+')':'Verwijder')+'</button></div>';
   h+='<details class="mobmore"'+(window.innerWidth>=700?' open':'')+'><summary>Meer opties</summary><div class="mobbody">';
   h+='<div class="tools hideful">'+periodTools()+'</div><div class="tools">'+'<div class="seg" role="group" aria-label="Breedte activiteiten">'+'<button type="button" data-lw="100" title="Standaardbreedte">↺ Standaard</button></div>'+'<div class="seg" role="group" aria-label="Zoom">'+[100,90,80,70,60,50].map(function(z){return '<button type="button" data-zoom="'+z+'" aria-pressed="'+(V.zoom===z)+'">'+z+'%</button>';}).join('')+'</div></div>'+'</div></div></details>';
-  if(V.mode==='move') h+='<div class="tools pastebar">'+(V.rsel.length?'<b>'+V.rsel.length+' stuk(ken) geselecteerd</b><div class="seg"><button type="button" data-rs="-5">◀ week</button><button type="button" data-rs="-1">◀ dag</button><button type="button" data-rs="1">dag ▶</button><button type="button" data-rs="5">week ▶</button></div><span style="display:inline-flex;gap:6px;align-items:center"><input type="text" id="rsTxt" placeholder="Tekst, bijv. 44" style="width:120px" aria-label="Tekst voor de geselecteerde balken" enterkeyhint="done"><button class="btn" type="button" data-rstxt="1">Zet in balken</button></span><button class="btn" type="button" data-bcopysel="1">📋 Kopiëren</button><button class="btn" type="button" data-rsall="1">Hele regel(s)</button><button class="btn" type="button" data-rsclear="1">✕ Wis selectie</button>':'<span style="color:var(--muted)">Tik op balken om ze te selecteren (oranje rand). Shift + klik selecteert alle balken van die regel. Sleep daarna, gebruik de pijlen, of kies Kopiëren.</span>')+'</div>';
+  if(V.mode==='move') h+='<div class="tools pastebar">'+(V.rsel.length?'<b>'+V.rsel.length+' stuk(ken) geselecteerd</b><div class="seg"><button type="button" data-rs="-5">◀ week</button><button type="button" data-rs="-1">◀ dag</button><button type="button" data-rs="1">dag ▶</button><button type="button" data-rs="5">week ▶</button></div><span style="display:inline-flex;gap:6px;align-items:center"><input type="text" id="rsTxt" placeholder="Tekst, bijv. 44" style="width:120px" aria-label="Tekst voor de geselecteerde balken" enterkeyhint="done"><button class="btn" type="button" data-rstxt="1">Zet in balken</button></span><button class="btn" type="button" data-addrfill="1">🏠 Adressen vullen…</button><button class="btn" type="button" data-bcopysel="1">📋 Kopiëren</button><button class="btn" type="button" data-rsall="1">Hele regel(s)</button><button class="btn" type="button" data-rsclear="1">✕ Wis selectie</button>':'<span style="color:var(--muted)">Tik op balken om ze te selecteren (oranje rand). Shift + klik selecteert alle balken van die regel. Sleep daarna, gebruik de pijlen, of kies Kopiëren.</span>')+'</div>';
   if(V.bclip) h+='<div class="tools pastebar"><b>'+V.bclip.n+' dag(en) gekopieerd.</b><span style="color:var(--muted)">'+(V.bclip.one?'Tik op de dag en regel waar de eerste dag moet komen.':'Tik op de dag waar de eerste dag moet komen; ze blijven op hun eigen regels.')+' Je kunt vaker plakken.</span><button class="btn" type="button" data-bclear="1">✓ Klaar</button></div>';
   if(V.tclip) h+='<div class="tools pastebar"><b>'+V.tclip.length+' regel(s) gekopieerd.</b><span style="color:var(--muted)">Tik in de planning op de dag en regel waar ze moeten komen.</span><button class="btn" type="button" data-tclear="1">✓ Klaar</button></div>';
   if(V.expMsg) h+='<p class="hint">'+esc(V.expMsg)+'</p>';
@@ -1685,6 +1685,54 @@ function textSel(txt){
       if(o.h==null&&!o.l&&!o.o&&!o.s) t.days[k]=o.d; else t.days[k]=o; }); });
   });
 }
+function selDays(){
+  var out=[];
+  V.rsel.forEach(function(key){ var p=key.split('|'), t=T(p[0]); if(!t) return;
+    runs(t).forEach(function(run){ if(run[0]!==p[1]) return; run.forEach(function(k){ out.push({t:t,k:k}); }); }); });
+  out.sort(function(a,b){ return a.k<b.k?-1:a.k>b.k?1:((a.t.ord||0)-(b.t.ord||0)); });
+  return out;
+}
+function addrList(o){
+  if(o.mode==='lijst') return o.lijst.split(/\r?\n/).map(function(x){return x.replace(/\t/g,' ').trim();}).filter(Boolean);
+  var st=parseInt(o.start,10), sp=parseInt(o.stap,10)||1, n=o.aantal, out=[];
+  if(isNaN(st)) return out;
+  for(var i=0;i<n;i++){ var nr=st+i*sp; out.push((o.straat?o.straat.trim()+' ':'')+nr+(o.toev||'')); }
+  return out;
+}
+function setLbl(t,k,txt){ var cur=t.days[k], o=(cur&&typeof cur==='object')?cur:{d:isD(cur)?1:0}; o.l=txt; if(o.h==null&&!o.l&&!o.o&&!o.s) t.days[k]=o.d; else t.days[k]=o; }
+function openAddr(){
+  var days=selDays(); if(!days.length) return;
+  var h='<div class="ov" id="ov"><form class="dlg" id="frm" style="max-width:520px"><h2>Adressen in balken zetten</h2><div class="in">';
+  h+='<p class="hint" style="margin:0 0 10px">'+days.length+' dag(en) geselecteerd. Ze worden op datum gevuld, van vroeg naar laat.</p>';
+  h+='<div class="seg" role="group" style="margin-bottom:10px"><button type="button" data-am="tel" aria-pressed="true">Doortellen</button><button type="button" data-am="lijst" aria-pressed="false">Lijst plakken</button></div>';
+  h+='<div id="a_tel"><label>Straat (mag leeg)<input type="text" id="a_str" placeholder="Bijv. Dorpsstraat"></label>';
+  h+='<div class="f" style="grid-template-columns:1fr 1fr 1fr"><label>Eerste nummer<input type="number" id="a_st" inputmode="numeric" value="44"></label><label>Stap<input type="number" id="a_sp" inputmode="numeric" value="2"></label><label>Toevoeging<input type="text" id="a_tv" placeholder="bijv. A"></label></div>';
+  h+='<p class="hint" style="margin:4px 0 0">Stap 1 = 44, 45, 46 · stap 2 = 44, 46, 48 (even of oneven kant)</p></div>';
+  h+='<div id="a_lst" hidden><label>Eén adres per regel (plakken uit Excel kan)<textarea id="a_ls" rows="7" placeholder="Dorpsstraat 44\nDorpsstraat 46\nKerkweg 3"></textarea></label></div>';
+  h+='<label style="margin-top:10px">Woningen per dag<input type="number" id="a_pd" inputmode="numeric" min="1" max="10" value="1"></label>';
+  h+='<p id="a_prev" style="margin:10px 0 0;font-size:13px"></p>';
+  h+='</div><div class="acts"><span class="spacer"></span><button class="btn" type="button" id="a_cancel">Annuleer</button><button class="btn save" type="submit" id="a_ok">Invullen</button></div></form></div>';
+  document.getElementById('modal').innerHTML=h;
+  var $=function(x){return document.getElementById(x);}, mode='tel';
+  var opts=function(){ var pd=Math.max(1,parseInt($('a_pd').value,10)||1); return {mode:mode,straat:$('a_str').value,start:$('a_st').value,stap:$('a_sp').value,toev:$('a_tv').value.trim(),lijst:$('a_ls').value,pd:pd,aantal:days.length*pd}; };
+  var plan=function(){ var o=opts(), L=addrList(o), res=[];
+    days.forEach(function(d,i){ var part=L.slice(i*o.pd,(i+1)*o.pd); if(part.length) res.push({d:d,txt:part.join(' / ')}); });
+    var over=Math.max(0,L.length-days.length*o.pd); return {res:res,L:L,o:o,over:over}; };
+  var upd=function(){ var p=plan(), ex=p.res.slice(0,3).map(function(r){return esc(r.d.k.slice(8,10)+'-'+r.d.k.slice(5,7))+': <b>'+esc(r.txt)+'</b>';}).join(' · ');
+    var msg=p.res.length+' van '+days.length+' dagen krijgen een adres'+(ex?' — '+ex+(p.res.length>3?' …':''):'');
+    if(p.res.length<days.length) msg+='<br><span style="color:#B42318">'+(days.length-p.res.length)+' dag(en) blijven leeg: te weinig adressen.</span>';
+    if(p.over) msg+='<br><span style="color:#B42318">'+p.over+' adres(sen) over: te weinig dagen geselecteerd.</span>';
+    $('a_prev').innerHTML=msg; $('a_ok').disabled=!p.res.length; };
+  document.querySelectorAll('[data-am]').forEach(function(b){ b.addEventListener('click',function(){ mode=b.getAttribute('data-am');
+    document.querySelectorAll('[data-am]').forEach(function(x){ x.setAttribute('aria-pressed',x===b?'true':'false'); });
+    $('a_tel').hidden=mode!=='tel'; $('a_lst').hidden=mode!=='lijst'; upd(); }); });
+  ['a_str','a_st','a_sp','a_tv','a_ls','a_pd'].forEach(function(id){ $(id).addEventListener('input',upd); });
+  $('a_cancel').addEventListener('click',closeModal);
+  $('ov').addEventListener('click',function(e){if(e.target.id==='ov')closeModal();});
+  $('frm').addEventListener('submit',function(e){ e.preventDefault(); var p=plan(); if(!p.res.length) return;
+    mut(function(){ p.res.forEach(function(r){ setLbl(r.d.t,r.d.k,r.txt); }); },'adressen gevuld'); closeModal(); });
+  upd();
+}
 function copySel(){
   var items=[], base=null, n=0, tids={};
   V.rsel.forEach(function(key){ var p=key.split('|'), t=T(p[0]); if(!t) return;
@@ -1876,6 +1924,7 @@ document.addEventListener('click',function(e){
   if((el=t.closest('[data-rs]'))){ var n5=+el.getAttribute('data-rs'); mut(function(){shiftRsel(n5);}); return; }
   if(t.closest('[data-rsclear]')){ V.rsel=[]; render(); return; }
   if(t.closest('[data-rstxt]')){ var tx=(document.getElementById('rsTxt')||{}).value; tx=(tx||'').trim(); mut(function(){ textSel(tx); },'tekst in balken'); return; }
+  if(t.closest('[data-addrfill]')){ openAddr(); return; }
   if(t.closest('[data-bcopysel]')){ copySel(); render(); return; }
   if(t.closest('[data-bclear]')){ V.bclip=null; render(); return; }
   if(t.closest('[data-rsall]')){ var tsel={}; V.rsel.forEach(function(k){ tsel[k.split('|')[0]]=1; }); Object.keys(tsel).forEach(function(id){ var tt=T(id); if(tt) runs(tt).forEach(function(run){ var kk=id+'|'+run[0]; if(V.rsel.indexOf(kk)<0) V.rsel.push(kk); }); }); render(); return; }
