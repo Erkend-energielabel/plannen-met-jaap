@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:48</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:52</p>
   </form>
 </div>
 <style>
@@ -1463,19 +1463,26 @@ function parseSpoken(txt){
 function openSpeak(){
   var p=curProj(); if(!p) return;
   var st=today(); if(isWE(st)) st=nextWd(st);
-  var h='<div class="ov" id="ov"><form class="dlg" id="frm" style="max-width:560px"><h2>Planning inspreken</h2><div class="in">';
-  h+='<p class="hint" style="margin:0 0 8px">Zeg bijvoorbeeld: “dag één vloer afdekken, dag twee cv-ketel weghalen, dag drie tot vijf radiatoren weghalen”.</p>';
-  h+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><button class="btn primary" type="button" id="sp_mic">🎤 Start inspreken</button><span id="sp_st" class="hint" style="margin:0"></span></div>';
-  h+='<label>Wat je zei (je kunt het hier ook typen of verbeteren)<textarea id="sp_tx" rows="4"></textarea></label>';
-  h+='<div class="f" style="grid-template-columns:1fr 1fr;margin-top:8px"><label>Dag 1 is<input type="date" id="sp_d" value="'+F(st)+'"></label><label>Huisnummer (mag leeg)<input type="text" id="sp_l" placeholder="bijv. 44"></label></div>';
-  h+='<div id="sp_prev" style="margin-top:10px;font-size:13px"></div>';
+  var h='<div class="ov" id="ov"><form class="dlg spk" id="frm" style="max-width:760px;width:96vw;font-size:16px"><h2 style="font-size:24px">🎤 Planning inspreken</h2><div class="in">';
+  h+='<div style="background:var(--field);border-radius:8px;padding:12px 14px;margin:0 0 14px;line-height:1.5">'
+    +'<b>Zo werkt het</b><ol style="margin:6px 0 0 20px;padding:0">'
+    +'<li>Kies hieronder op welke datum <b>dag 1</b> valt.</li>'
+    +'<li>Tik op de grote knop <b>Start inspreken</b> en zeg je planning. Begin elk onderdeel met <b>“dag”</b> en het nummer.</li>'
+    +'<li>Tik op <b>Stop</b>. Controleer onderaan wat er in de planning komt. Klopt een woord niet? Verbeter het in het tekstvak.</li>'
+    +'<li>Tik op <b>Zet in planning</b>. Elke activiteit krijgt een eigen regel; weekenden worden overgeslagen.</li></ol>'
+    +'<div style="margin-top:8px"><b>Voorbeeld:</b> <i>“dag één vloer afdekken, dag twee cv-ketel weghalen, dag drie cv-ketel vullen, dag vier tot zes radiatoren weghalen, dag zeven meterkast timmeren”</i></div>'
+    +'<div class="hint" style="margin:6px 0 0">Meerdere dagen: zeg “dag vier tot zes” of “dag vier tot en met zes”.</div></div>';
+  h+='<div class="f" style="grid-template-columns:1fr 1fr;margin-bottom:12px"><label>Dag 1 is<input type="date" id="sp_d" value="'+F(st)+'" style="font-size:17px"></label><label>Huisnummer (mag leeg)<input type="text" id="sp_l" placeholder="bijv. 44" style="font-size:17px"></label></div>';
+  h+='<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;flex-wrap:wrap"><button class="btn primary" type="button" id="sp_mic" style="font-size:20px;padding:14px 26px;min-height:56px">🎤 Start inspreken</button><span id="sp_st" style="font-size:15px;font-weight:600;color:#B42318"></span></div>';
+  h+='<label style="display:block">Wat je zei — je kunt het hier ook typen of verbeteren<textarea id="sp_tx" rows="5" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;font-size:17px;line-height:1.4"></textarea></label>';
+  h+='<div id="sp_prev" style="margin-top:12px;font-size:16px;border-top:1px solid var(--line2);padding-top:10px"></div>';
   h+='</div><div class="acts"><span class="spacer"></span><button class="btn" type="button" id="sp_cancel">Annuleer</button><button class="btn save" type="submit" id="sp_ok" disabled>Zet in planning</button></div></form></div>';
   document.getElementById('modal').innerHTML=h;
   var $=function(x){return document.getElementById(x);};
   var plan=function(){ return parseSpoken($('sp_tx').value); };
   var dayDate=function(start,n){ var ms=start; for(var i=1;i<n;i++) ms=nextWd(ms); return ms; };
   var upd=function(){ var L=plan(), d0=P($('sp_d').value||F(st));
-    $('sp_prev').innerHTML=L.length?'<b>Dit komt in de planning:</b>'+L.map(function(x){ var a=dayDate(d0,x.days[0]), b=dayDate(d0,x.days[x.days.length-1]); return '<div style="margin:3px 0">Dag '+x.days[0]+(x.days.length>1?'–'+x.days[x.days.length-1]:'')+' · '+esc(fullD(a)).split(' ').slice(0,3).join(' ')+(x.days.length>1?' t/m '+esc(fullD(b)).split(' ').slice(0,3).join(' '):'')+' · <b>'+esc(x.name)+'</b></div>'; }).join(''):'<span class="hint">Nog niets herkend. Begin elk onderdeel met “dag” en een nummer.</span>';
+    $('sp_prev').innerHTML=L.length?'<b style="font-size:17px">Dit komt in de planning ('+L.length+' regel'+(L.length===1?'':'s')+'):</b>'+L.map(function(x){ var a=dayDate(d0,x.days[0]), b=dayDate(d0,x.days[x.days.length-1]); return '<div style="margin:3px 0">Dag '+x.days[0]+(x.days.length>1?'–'+x.days[x.days.length-1]:'')+' · '+esc(fullD(a)).split(' ').slice(0,3).join(' ')+(x.days.length>1?' t/m '+esc(fullD(b)).split(' ').slice(0,3).join(' '):'')+' · <b>'+esc(x.name)+'</b></div>'; }).join(''):'<span class="hint" style="font-size:15px">Hier zie je straks wat er in de planning komt. Nog niets herkend: begin elk onderdeel met “dag” en een nummer.</span>';
     $('sp_ok').disabled=!L.length; };
   ['sp_tx','sp_d'].forEach(function(id){ $(id).addEventListener('input',upd); });
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition, mic=$('sp_mic');
@@ -1485,7 +1492,7 @@ function openSpeak(){
       $('sp_tx').value=(base+' '+fin+tmp).replace(/\s+/g,' ').trim(); upd(); };
     rec.onend=function(){ if(on){ try{ rec.start(); return; }catch(x){} } stop(); };
     rec.onerror=function(ev){ if(ev.error==='no-speech') return; on=false; stop(); $('sp_st').textContent='Inspreken lukt niet hier. Gebruik de microfoon van je toetsenbord in het tekstvak.'; };
-    mic.addEventListener('click',function(){ if(on){ on=false; try{rec.stop();}catch(x){} stop(); return; } base=$('sp_tx').value; on=true; mic.textContent='⏹ Stop'; $('sp_st').textContent='Luistert… zeg “dag één …”'; try{ rec.start(); }catch(x){ stop(); } });
+    mic.addEventListener('click',function(){ if(on){ on=false; try{rec.stop();}catch(x){} stop(); return; } base=$('sp_tx').value; on=true; mic.textContent='⏹ Stop inspreken'; $('sp_st').textContent='● Luistert… zeg “dag één …”'; try{ rec.start(); }catch(x){ stop(); } });
   } else { mic.style.display='none'; $('sp_st').textContent='Tik in het tekstvak en gebruik de microfoon van je toetsenbord.'; }
   $('sp_cancel').addEventListener('click',closeModal);
   $('ov').addEventListener('click',function(e){ if(e.target.id==='ov') closeModal(); });
