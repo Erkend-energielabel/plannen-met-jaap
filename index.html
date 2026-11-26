@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 09:13</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 09:14</p>
   </form>
 </div>
 <style>
@@ -1341,8 +1341,6 @@ function viewToegang(){
     h+='<button type="button" class="btn" data-mlog="'+esc(m.uid)+'">'+(V.mlog===m.uid?'Logboek verbergen':'Logboek tonen')+'</button>';
     if(V.mlog===m.uid){ var recent=lg.slice(-25).reverse();
       h+='<div class="acc-pr" style="flex-direction:column;align-items:stretch;max-height:220px;overflow:auto;margin-top:6px">'+(recent.length?recent.map(function(x){return '<div class="hint" style="margin:2px 0">'+esc(fmtDT(x.t))+' · '+esc(x.a)+'</div>';}).join(''):'<div class="hint">Nog niets vastgelegd.</div>')+'</div>'; }
-    if(m.role!=='beheerder'){ h+='<label style="display:block;margin:8px 0">Wat ziet deze persoon<select data-mview="'+esc(m.uid)+'" aria-label="Wat ziet deze persoon"><option value="alles"'+(m.view!=='mijn'?' selected':'')+'>Alle vakgebieden</option><option value="mijn"'+(m.view==='mijn'?' selected':'')+'>Alleen zijn eigen vakgebied</option></select></label>'; }
-    if(m.role!=='beheerder'){ h+='<p class="hint" style="margin:8px 0 4px">Vakgebieden van deze persoon</p><div class="acc-pr">'+S.disciplines.map(function(d){ return '<label class="chk"><input type="checkbox" data-mdisc="'+esc(m.uid)+'" value="'+d.id+'"'+((m.discs||[]).indexOf(d.id)>=0?' checked':'')+'> '+esc(d.name)+'</label>'; }).join('')+'</div>'; }
     if(m.role!=='beheerder') h+='<div class="acc-pr">'+S.projects.map(function(p){ return '<label class="chk"><input type="checkbox" data-mproj="'+esc(m.uid)+'" value="'+p.id+'"'+((m.projects||[]).indexOf(p.id)>=0?' checked':'')+'> '+esc((p.nr?p.nr+' · ':'')+p.name)+'</label>'; }).join('')+'</div>';
     h+='</div>';
   });
