@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 09:10</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 09:12</p>
   </form>
 </div>
 <style>
@@ -1058,7 +1058,7 @@ function renderInner(){
   var rc=document.getElementById('rolechip');
   if(ME.owner){ rc.innerHTML='<label class="viewas">Bekijk als <select id="viewAs" aria-label="Bekijk als">'+'<option value="">Beheerder (ik)</option>'+members().map(function(m){ return '<option value="'+esc(m.uid)+'"'+(V.viewAsUid===m.uid?' selected':'')+'>'+esc(ROLEN[m.role]||m.role)+' · '+esc(m.naam||m.note||'lid')+'</option>'; }).join('')+'</select></label>'; }
   else { var mm=myMember(), own=!!mm&&!V.viewAsUid;
-    rc.innerHTML=(rl!=='laden'&&rl!=='geen')?'<span class="rolechip">'+esc(ROLEN[rl]||rl)+'</span>'+(own&&mm.discs&&mm.discs.length?'<span class="seg vmode" role="group" aria-label="Wat zie ik"><button type="button" data-vmode="mijn" aria-pressed="'+(mm.view==='mijn')+'">Mijn vakgebied</button><button type="button" data-vmode="alles" aria-pressed="'+(mm.view!=='mijn')+'">Alles</button></span>':''):'';
+    rc.innerHTML=(rl!=='laden'&&rl!=='geen')?'<span class="rolechip">'+esc(ROLEN[rl]||rl)+'</span>':'';
   }
   if(ME.owner&&V.viewAsUid&&!members().some(function(m){return m.uid===V.viewAsUid;})) V.viewAsUid=null;
   var a=document.getElementById('app'), sx=0, sy=0, g=document.getElementById('grid');
@@ -1331,7 +1331,8 @@ function viewToegang(){
     h+='<button type="button" class="xdel'+(V.armed==='m'+m.uid?' armed':'')+'" data-mdel="'+esc(m.uid)+'" aria-label="Toegang intrekken">'+(V.armed==='m'+m.uid?'✓?':'×')+'</button></div>';
     h+='<div class="f" style="grid-template-columns:1fr 1fr;margin:6px 0"><label>Naam<input type="text" data-mnaam="'+esc(m.uid)+'" value="'+esc(m.naam||'')+'" placeholder="Naam van deze persoon"></label><label>Bedrijf<input type="text" data-mbedr="'+esc(m.uid)+'" value="'+esc(m.bedrijf!==undefined?m.bedrijf:(m.note||''))+'" placeholder="Bijv. bedrijfsnaam"></label></div>';
     if(m.role==='beheerder') h+='<p class="hint">Ziet alle projecten.</p>';
-    if(m.role!=='beheerder'){ h+='<p class="hint" style="margin:8px 0 4px">Vakgebieden van deze persoon (de persoon kiest zelf of hij alleen deze ziet of alles)</p><div class="acc-pr">'+S.disciplines.map(function(d){ return '<label class="chk"><input type="checkbox" data-mdisc="'+esc(m.uid)+'" value="'+d.id+'"'+((m.discs||[]).indexOf(d.id)>=0?' checked':'')+'> '+esc(d.name)+'</label>'; }).join('')+'</div>'; }
+    if(m.role!=='beheerder'){ h+='<label style="display:block;margin:8px 0">Wat ziet deze persoon<select data-mview="'+esc(m.uid)+'" aria-label="Wat ziet deze persoon"><option value="alles"'+(m.view!=='mijn'?' selected':'')+'>Alle vakgebieden</option><option value="mijn"'+(m.view==='mijn'?' selected':'')+'>Alleen zijn eigen vakgebied</option></select></label>'; }
+    if(m.role!=='beheerder'){ h+='<p class="hint" style="margin:8px 0 4px">Vakgebieden van deze persoon</p><div class="acc-pr">'+S.disciplines.map(function(d){ return '<label class="chk"><input type="checkbox" data-mdisc="'+esc(m.uid)+'" value="'+d.id+'"'+((m.discs||[]).indexOf(d.id)>=0?' checked':'')+'> '+esc(d.name)+'</label>'; }).join('')+'</div>'; }
     if(m.role!=='beheerder') h+='<div class="acc-pr">'+S.projects.map(function(p){ return '<label class="chk"><input type="checkbox" data-mproj="'+esc(m.uid)+'" value="'+p.id+'"'+((m.projects||[]).indexOf(p.id)>=0?' checked':'')+'> '+esc((p.nr?p.nr+' · ':'')+p.name)+'</label>'; }).join('')+'</div>';
     h+='</div>';
   });
@@ -1824,6 +1825,7 @@ document.addEventListener('change',function(e){
   if(t.closest&&t.closest('#modal')) return;
   if(t.hasAttribute&&t.hasAttribute('data-mrole')){ if(!isAdmin()) return; var mr=t.getAttribute('data-mrole'); mut(function(){ members().forEach(function(m){ if(m.uid===mr) m.role=t.value; }); }); return; }
   if(t.hasAttribute&&t.hasAttribute('data-mproj')){ if(!isAdmin()) return; var mp=t.getAttribute('data-mproj'); mut(function(){ members().forEach(function(m){ if(m.uid!==mp) return; m.projects=m.projects||[]; var i=m.projects.indexOf(t.value); if(t.checked&&i<0) m.projects.push(t.value); if(!t.checked&&i>=0) m.projects.splice(i,1); }); }); return; }
+  if(t.hasAttribute&&t.hasAttribute('data-mview')){ if(!isAdmin()) return; var mv=t.getAttribute('data-mview'); mut(function(){ members().forEach(function(m){ if(m.uid===mv) m.view=t.value; }); }); return; }
   if(t.hasAttribute&&t.hasAttribute('data-mdisc')){ if(!isAdmin()) return; var md=t.getAttribute('data-mdisc'); mut(function(){ members().forEach(function(m){ if(m.uid!==md) return; m.discs=m.discs||[]; var i=m.discs.indexOf(t.value); if(t.checked&&i<0) m.discs.push(t.value); if(!t.checked&&i>=0) m.discs.splice(i,1); }); }); return; }
   if(t.hasAttribute&&(t.hasAttribute('data-mnaam')||t.hasAttribute('data-mbedr'))){ if(!isAdmin()) return; var isN=t.hasAttribute('data-mnaam'), mn=t.getAttribute(isN?'data-mnaam':'data-mbedr'); mut(function(){ members().forEach(function(m){ if(m.uid===mn){ if(isN) m.naam=t.value.trim(); else m.bedrijf=t.value.trim(); } }); }); return; }
   if(t.id==='viewAs'){ V.viewAsUid=t.value||null; V.pid=null; V.chk=[]; V.tab='planning'; render(); return; }
