@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:45</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:48</p>
   </form>
 </div>
 <style>
@@ -1190,7 +1190,7 @@ function viewPlanning(){
   h+='<div class="tools"><button class="btn'+(ED?' primary':'')+'" type="button" data-edtog="1" aria-expanded="'+ED+'">'+(ED?'▴ Bewerken inklappen':'✎ Bewerken')+'</button><button class="btn" type="button" data-exp="pdf">🖨 PDF</button><button class="btn" type="button" data-exp="xlsx">📊 Excel</button>';
   h+='<button class="btn'+(V.full?' primary':'')+'" type="button" data-full="1" title="Beeldvullend">'+(V.full?'✕ Klein':'⛶ Beeldvullend')+'</button></div>';
   if(ED){
-  h+='<div class="tools"><button class="btn danger" type="button" data-clearp="1">🗑 Planning leegmaken</button>';
+  h+='<div class="tools"><button class="btn" type="button" data-speak="1">🎤 Planning inspreken</button><button class="btn danger" type="button" data-clearp="1">🗑 Planning leegmaken</button>';
   h+='<div class="seg"><button type="button" data-undo="1" '+(UNDO.length?'':'disabled')+' title="Herstel">↶ Herstel</button><button type="button" data-redo="1" '+(REDO.length?'':'disabled')+' title="Opnieuw">↷ Opnieuw</button></div>';
   h+='<div class="seg" role="group" aria-label="Werkwijze"><button type="button" data-mode="normal" aria-pressed="'+(V.mode==='normal')+'">👆 Normaal</button><button type="button" data-mode="move" aria-pressed="'+(V.mode==='move')+'">↔ Verplaatsen</button><button type="button" data-mode="postit" aria-pressed="'+(V.mode==='postit')+'">🏷 Tekst/sticker</button><button type="button" data-mode="weather" aria-pressed="'+(V.mode==='weather')+'">🌧 Onwerkbaar</button><button type="button" data-mode="free" aria-pressed="'+(V.mode==='free')+'">🏖 Vrije dag</button><button type="button" data-mode="draw" aria-pressed="'+(V.mode==='draw')+'">✏️ Tekenen</button><button type="button" data-mode="erase" aria-pressed="'+(V.mode==='erase')+'">🧽 Gum</button></div>';
   h+='<div class="spacer"></div><button class="btn" type="button" data-bedit="1" '+(n?'':'disabled')+'>✎ Bewerk</button><button class="btn" type="button" data-bcopy="1" '+(n?'':'disabled')+'>⧉ Kopie</button><button class="btn danger'+(V.armed==='bdel'?' armed':'')+'" type="button" data-bdel="1" '+(n?'':'disabled')+'>🗑 '+(V.armed==='bdel'?'Zeker? ('+n+')':'Verwijder')+'</button></div>';
@@ -1445,6 +1445,62 @@ function closeModal(){document.getElementById('modal').innerHTML='';}
 var DISC_KW={'Loodgieter':['cv','installat','installateur','warmtenet','ketel','radiator','leiding','afvoer','loodgieter'],'Timmerman':['bouwkundig','timmer'],'Tegelzetter':['tegel'],'Elektricien':['elektr','electr','groep','kabel','meterkast','aansluit','perilex','wcd']};
 function kwOf(d){ return (S.dkw&&S.dkw[d.id])||DISC_KW[d.name]||[d.name.toLowerCase()]; }
 function kwText(d){ return kwOf(d).join(', '); }
+var NUMW={een:1,'één':1,eerste:1,twee:2,tweede:2,drie:3,derde:3,vier:4,vierde:4,vijf:5,vijfde:5,zes:6,zesde:6,zeven:7,zevende:7,acht:8,achtste:8,negen:9,negende:9,tien:10,tiende:10,elf:11,elfde:11,twaalf:12,twaalfde:12,dertien:13,veertien:14,vijftien:15,zestien:16,zeventien:17,achttien:18,negentien:19,twintig:20};
+function numOf(w){ w=(w||'').toLowerCase(); return /^\d+$/.test(w)?+w:(NUMW[w]||0); }
+function parseSpoken(txt){
+  var W='(\\d+|'+Object.keys(NUMW).join('|')+')';
+  var re=new RegExp('\\bdag\\s+'+W+'(?:\\s*(?:tot en met|t/m|tot|-|en)\\s*(?:dag\\s+)?'+W+')?\\b','gi');
+  var marks=[], m; while((m=re.exec(txt))){ marks.push({i:m.index,end:re.lastIndex,a:numOf(m[1]),b:m[2]?numOf(m[2]):0}); }
+  var out=[];
+  marks.forEach(function(k,j){
+    var name=txt.slice(k.end,j+1<marks.length?marks[j+1].i:txt.length).replace(/^[\s,.:;-]+|[\s,.:;-]+$/g,'').replace(/\s+/g,' ');
+    if(!name||!k.a) return; name=name.charAt(0).toUpperCase()+name.slice(1);
+    var b=k.b&&k.b>=k.a?k.b:k.a, ds=[]; for(var d=k.a;d<=b;d++) ds.push(d);
+    out.push({name:name,days:ds});
+  });
+  return out;
+}
+function openSpeak(){
+  var p=curProj(); if(!p) return;
+  var st=today(); if(isWE(st)) st=nextWd(st);
+  var h='<div class="ov" id="ov"><form class="dlg" id="frm" style="max-width:560px"><h2>Planning inspreken</h2><div class="in">';
+  h+='<p class="hint" style="margin:0 0 8px">Zeg bijvoorbeeld: “dag één vloer afdekken, dag twee cv-ketel weghalen, dag drie tot vijf radiatoren weghalen”.</p>';
+  h+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><button class="btn primary" type="button" id="sp_mic">🎤 Start inspreken</button><span id="sp_st" class="hint" style="margin:0"></span></div>';
+  h+='<label>Wat je zei (je kunt het hier ook typen of verbeteren)<textarea id="sp_tx" rows="4"></textarea></label>';
+  h+='<div class="f" style="grid-template-columns:1fr 1fr;margin-top:8px"><label>Dag 1 is<input type="date" id="sp_d" value="'+F(st)+'"></label><label>Huisnummer (mag leeg)<input type="text" id="sp_l" placeholder="bijv. 44"></label></div>';
+  h+='<div id="sp_prev" style="margin-top:10px;font-size:13px"></div>';
+  h+='</div><div class="acts"><span class="spacer"></span><button class="btn" type="button" id="sp_cancel">Annuleer</button><button class="btn save" type="submit" id="sp_ok" disabled>Zet in planning</button></div></form></div>';
+  document.getElementById('modal').innerHTML=h;
+  var $=function(x){return document.getElementById(x);};
+  var plan=function(){ return parseSpoken($('sp_tx').value); };
+  var dayDate=function(start,n){ var ms=start; for(var i=1;i<n;i++) ms=nextWd(ms); return ms; };
+  var upd=function(){ var L=plan(), d0=P($('sp_d').value||F(st));
+    $('sp_prev').innerHTML=L.length?'<b>Dit komt in de planning:</b>'+L.map(function(x){ var a=dayDate(d0,x.days[0]), b=dayDate(d0,x.days[x.days.length-1]); return '<div style="margin:3px 0">Dag '+x.days[0]+(x.days.length>1?'–'+x.days[x.days.length-1]:'')+' · '+esc(fullD(a)).split(' ').slice(0,3).join(' ')+(x.days.length>1?' t/m '+esc(fullD(b)).split(' ').slice(0,3).join(' '):'')+' · <b>'+esc(x.name)+'</b></div>'; }).join(''):'<span class="hint">Nog niets herkend. Begin elk onderdeel met “dag” en een nummer.</span>';
+    $('sp_ok').disabled=!L.length; };
+  ['sp_tx','sp_d'].forEach(function(id){ $(id).addEventListener('input',upd); });
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition, mic=$('sp_mic');
+  if(SR){ var rec=new SR(), on=false, base=''; rec.lang='nl-NL'; rec.continuous=true; rec.interimResults=true;
+    var stop=function(){ on=false; mic.textContent='🎤 Start inspreken'; $('sp_st').textContent=''; };
+    rec.onresult=function(ev){ var fin='', tmp=''; for(var i=0;i<ev.results.length;i++){ var r=ev.results[i]; if(r.isFinal) fin+=r[0].transcript+' '; else tmp+=r[0].transcript; }
+      $('sp_tx').value=(base+' '+fin+tmp).replace(/\s+/g,' ').trim(); upd(); };
+    rec.onend=function(){ if(on){ try{ rec.start(); return; }catch(x){} } stop(); };
+    rec.onerror=function(ev){ if(ev.error==='no-speech') return; on=false; stop(); $('sp_st').textContent='Inspreken lukt niet hier. Gebruik de microfoon van je toetsenbord in het tekstvak.'; };
+    mic.addEventListener('click',function(){ if(on){ on=false; try{rec.stop();}catch(x){} stop(); return; } base=$('sp_tx').value; on=true; mic.textContent='⏹ Stop'; $('sp_st').textContent='Luistert… zeg “dag één …”'; try{ rec.start(); }catch(x){ stop(); } });
+  } else { mic.style.display='none'; $('sp_st').textContent='Tik in het tekstvak en gebruik de microfoon van je toetsenbord.'; }
+  $('sp_cancel').addEventListener('click',closeModal);
+  $('ov').addEventListener('click',function(e){ if(e.target.id==='ov') closeModal(); });
+  $('frm').addEventListener('submit',function(e){ e.preventDefault(); var L=plan(); if(!L.length) return; var d0=P($('sp_d').value||F(st)), lbl=$('sp_l').value.trim();
+    closeModal();
+    mut(function(){ var mx=-1; S.tasks.forEach(function(t){ if(t.projectId===p.id&&t.ord!=null&&t.ord>mx) mx=t.ord; });
+      L.forEach(function(x){ var nm=x.name.toLowerCase();
+        var t=S.tasks.filter(function(q){return q.projectId===p.id&&(q.name||'').trim().toLowerCase()===nm;})[0];
+        if(!t){ t={id:uid(),projectId:p.id,chap:'',name:x.name,personId:'',disc:guessDisc(x.name),perDay:8,note:'',days:{},thruHol:false,ms:'',ord:++mx}; S.tasks.push(t); }
+        x.days.forEach(function(n){ var k=F(dayDate(d0,n)); if(!(k in t.days)) t.days[k]=lbl?{d:0,l:lbl}:0; else if(lbl) setLbl(t,k,lbl); });
+      });
+      renumber(p.id); },'planning ingesproken');
+  });
+  upd();
+}
 function guessDisc(name){ var l=(name||'').toLowerCase(); if(!l) return ''; var hit=''; discsOf(cpid()).some(function(d){ var kws=kwOf(d); if(kws.some(function(k){return l.indexOf(k)>=0;})){ hit=d.id; return true; } return false; }); return hit; }
 function openEdit(id,chapPreset){
   var p=curProj(); if(!p&&!id){V.tab='beheer';render();return;}
@@ -1990,6 +2046,7 @@ document.addEventListener('click',function(e){
   if(t.closest('[data-tplsave]')){ tplSave(); return; }
   if(t.closest('[data-tpls]')){ tplList(); return; }
   if(t.closest('[data-edtog]')){ V.edit=!(V.edit!==false); try{localStorage.setItem('bouwplanner.edit',V.edit?'1':'0');}catch(e){} if(!V.edit){ V.mode='normal'; V.rsel=[]; V.chk=[]; } render(); return; }
+  if(t.closest('[data-speak]')){ openSpeak(); return; }
   if(t.closest('[data-addrfill]')){ openAddr(); return; }
   if(t.closest('[data-bcopysel]')){ copySel(); render(); return; }
   if(t.closest('[data-bclear]')){ V.bclip=null; render(); return; }
