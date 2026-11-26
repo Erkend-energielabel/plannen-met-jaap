@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     <details class="lg-diag"><summary>Details voor hulp</summary><pre id="lgLog">(nog niets)</pre><button type="button" class="lg-diag-b" onclick="try{localStorage.removeItem('planner.authlog')}catch(e){};document.getElementById('lgLog').textContent='(leeg)'">Wissen</button></details>
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 09:17</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 09:24</p>
   </form>
 </div>
 <style>
@@ -1412,7 +1412,12 @@ function accSearch(q){
   }).catch(function(){ box.innerHTML='<p class="hint">Zoeken lukt nu niet.</p>'; });
 }
 function viewBeheer(){
-  var h='<div class="cols"><div class="card"><h2>Projecten</h2>';
+  var cp=curProj(), vps=VP();
+  var h='<div class="card" style="border-left:8px solid '+esc(cp?cp.color:'#8A8580')+';display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px">'
+    +'<span style="font-size:16px"><b>Je werkt in:</b> '+(cp?esc((cp.nr?cp.nr+' · ':'')+cp.name):'geen project')+'</span>'
+    +(vps.length>1?'<select id="pSel" class="ptsel" aria-label="Kies project">'+vps.map(function(q){return '<option value="'+q.id+'"'+(cp&&q.id===cp.id?' selected':'')+'>'+esc((q.nr?q.nr+' · ':'')+q.name)+'</option>';}).join('')+'</select>':'')
+    +'<span class="hint" style="margin:0;flex-basis:100%">Deelnemers en vakgebieden hieronder gelden alleen voor dit project.</span></div>';
+  h+='<div class="cols"><div class="card"><h2>Projecten</h2>';
   VP().forEach(function(p){ h+='<div class="item"><input type="color" value="'+esc(p.color)+'" data-pk="color" data-pid="'+p.id+'" aria-label="Kleur"><input type="text" value="'+esc(p.nr||'')+'" data-pk="nr" data-pid="'+p.id+'" aria-label="Projectnummer" placeholder="Projectnr." style="flex:0 0 110px"><input type="text" value="'+esc(p.name)+'" data-pk="name" data-pid="'+p.id+'" aria-label="Projectnaam"><button class="btn danger'+(V.armed==='p'+p.id?' armed':'')+'" type="button" data-delp="'+p.id+'">'+(V.armed==='p'+p.id?'Zeker weten?':'Verwijder')+'</button></div>'; });
   h+='<div class="acts"><button class="btn" type="button" data-a="addp">+ Project</button></div><p class="hint">Een project verwijderen verwijdert ook de activiteiten en fasen.</p></div>';
   h+='<div class="card"><h2>Deelnemers van dit project</h2>';
