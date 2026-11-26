@@ -467,7 +467,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:52</p>
+    <p class="lg-ver" id="lgVer">versie 26-11-2026 18:53</p>
   </form>
 </div>
 <style>
@@ -1464,7 +1464,9 @@ function openSpeak(){
   var p=curProj(); if(!p) return;
   var st=today(); if(isWE(st)) st=nextWd(st);
   var h='<div class="ov" id="ov"><form class="dlg spk" id="frm" style="max-width:760px;width:96vw;font-size:16px"><h2 style="font-size:24px">🎤 Planning inspreken</h2><div class="in">';
-  h+='<div style="background:var(--field);border-radius:8px;padding:12px 14px;margin:0 0 14px;line-height:1.5">'
+  var seen=false; try{ seen=localStorage.getItem('bouwplanner.spkseen')==='1'; }catch(e){}
+  if(seen) h+='<button class="btn" type="button" id="sp_help" style="margin:0 0 12px">ⓘ Uitleg tonen</button>';
+  h+='<div id="sp_uitleg"'+(seen?' hidden':'')+' style="background:var(--field);border-radius:8px;padding:12px 14px;margin:0 0 14px;line-height:1.5">'
     +'<b>Zo werkt het</b><ol style="margin:6px 0 0 20px;padding:0">'
     +'<li>Kies hieronder op welke datum <b>dag 1</b> valt.</li>'
     +'<li>Tik op de grote knop <b>Start inspreken</b> en zeg je planning. Begin elk onderdeel met <b>“dag”</b> en het nummer.</li>'
@@ -1495,8 +1497,10 @@ function openSpeak(){
     mic.addEventListener('click',function(){ if(on){ on=false; try{rec.stop();}catch(x){} stop(); return; } base=$('sp_tx').value; on=true; mic.textContent='⏹ Stop inspreken'; $('sp_st').textContent='● Luistert… zeg “dag één …”'; try{ rec.start(); }catch(x){ stop(); } });
   } else { mic.style.display='none'; $('sp_st').textContent='Tik in het tekstvak en gebruik de microfoon van je toetsenbord.'; }
   $('sp_cancel').addEventListener('click',closeModal);
+  if($('sp_help')) $('sp_help').addEventListener('click',function(){ var u=$('sp_uitleg'); u.hidden=!u.hidden; this.textContent=u.hidden?'ⓘ Uitleg tonen':'ⓘ Uitleg verbergen'; });
   $('ov').addEventListener('click',function(e){ if(e.target.id==='ov') closeModal(); });
-  $('frm').addEventListener('submit',function(e){ e.preventDefault(); var L=plan(); if(!L.length) return; var d0=P($('sp_d').value||F(st)), lbl=$('sp_l').value.trim();
+  $('frm').addEventListener('submit',function(e){ e.preventDefault(); var L=plan(); if(!L.length) return;
+    try{ localStorage.setItem('bouwplanner.spkseen','1'); }catch(x){} var d0=P($('sp_d').value||F(st)), lbl=$('sp_l').value.trim();
     closeModal();
     mut(function(){ var mx=-1; S.tasks.forEach(function(t){ if(t.projectId===p.id&&t.ord!=null&&t.ord>mx) mx=t.ord; });
       L.forEach(function(x){ var nm=x.name.toLowerCase();
