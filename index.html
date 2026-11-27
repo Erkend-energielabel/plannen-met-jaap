@@ -276,6 +276,11 @@ body.full header.top,body.full .rule,body.full nav.tabs,body.full #dayinfo,body.
 .blk.done,.blk.nod.done{background:#1F7A4A!important;border:0!important;box-shadow:inset 0 0 0 2px #0E4D2C}
 .blk.done::after{content:"✓";position:absolute;inset:0;z-index:2;pointer-events:none;display:flex;align-items:center;justify-content:center;color:#fff;font:900 22px/1 var(--body,inherit);text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .blk.done .ck{display:none}
+.blk.half .loc{font-size:9px!important;letter-spacing:-.04em;padding:0 1px;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.blk.half.tx2 .loc{font-size:7.5px!important}
+.blk.half .hr{display:none}
+.blk.half.done::after{font-size:13px}
+.blk.half.done.tx::after{font-size:9px}
 .blk.done .loc{position:relative;z-index:3;color:#fff!important;text-shadow:0 1px 2px rgba(0,0,0,.6)!important}
 .blk.done.tx::after{font-size:12px;align-items:flex-end;justify-content:flex-end;padding:0 3px 1px 0}
 .blk.done .hr{z-index:3;color:#fff!important;text-shadow:none!important}
@@ -498,7 +503,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 27-11-2026 09:47</p>
+    <p class="lg-ver" id="lgVer">versie 27-11-2026 09:48</p>
   </form>
 </div>
 <style>
@@ -1218,7 +1223,7 @@ function blocksHTML(t){
       var i=idx[ds]; if(i==null) return;
       var nt=(t.days[ds]&&typeof t.days[ds]==='object'&&t.days[ds].o)||'', ns=(t.days[ds]&&typeof t.days[ds]==='object'&&t.days[ds].s)||'', done=isD(t.days[ds]), late=!done&&ds<tdS, off=offFor(t,ds), loc=dLoc(t,ds), hr=dHrs(t,ds), pt=dPart(t,ds);
       var inner=(ns||nt?'<i class="ob '+(ns||'n')+'"></i>':'')+(loc?'<span class="loc">'+esc(loc)+'</span>':'')+(t.hn?'<span class="hn">'+esc(t.hn)+'</span>':'')+(done?'<span class="ck'+(loc?' lo':'')+'">✓</span>':'')+(c>=22?'<span class="hr">'+hr+'</span>':'');
-      h+='<div class="blk'+(loc?' tx'+(String(loc).length>3?' tx2':''):'')+(disc(t.disc)?'':' nod')+(V.rsel.indexOf(t.id+'|'+run[0])>=0?' rsel':'')+(done?' done':'')+(late?' late':'')+(off?' off':'')+'" data-t="'+t.id+'" data-d="'+ds+'" data-r="'+ri+'" data-dn="'+esc(fullD(P(ds))+' · '+t.name+(pt?(pt==='o'?' · ochtend':' · middag'):'')+' · '+hr+' uur'+(loc?' · '+loc:'')+(nt?' · opm: '+nt:''))+'" style="left:'+(i*c+2+(pt==='m'?c/2:0))+'px;'+(pt?'width:'+(c/2-3)+'px;':'')+'--c:'+esc(col)+'">'+
+      h+='<div class="blk'+(loc?' tx'+(String(loc).length>3?' tx2':''):'')+(disc(t.disc)?'':' nod')+(V.rsel.indexOf(t.id+'|'+run[0])>=0?' rsel':'')+(done?' done':'')+(late?' late':'')+(off?' off':'')+(pt?' half':'')+'" data-t="'+t.id+'" data-d="'+ds+'" data-r="'+ri+'" data-dn="'+esc(fullD(P(ds))+' · '+t.name+(pt?(pt==='o'?' · ochtend':' · middag'):'')+' · '+hr+' uur'+(loc?' · '+loc:'')+(nt?' · opm: '+nt:''))+'" style="left:'+(i*c+2+(pt==='m'?c/2:0))+'px;'+(pt?'width:'+(c/2-3)+'px;':'')+'--c:'+esc(col)+'">'+
         (k===0?'<i class="hd l" data-side="l"></i>':'')+inner+(k===run.length-1?'<i class="hd r" data-side="r"></i>':'')+'</div>';
     });
   });
