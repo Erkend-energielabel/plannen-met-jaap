@@ -545,7 +545,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 27-11-2026 18:36</p>
+    <p class="lg-ver" id="lgVer">versie 27-11-2026 18:45</p>
   </form>
 </div>
 <style>
@@ -770,7 +770,9 @@ function fotoPut(id,img,meta,cb){ FOTOC[id]=img; if(!DBH){ try{ localStorage.set
 function openAdr(pid,l,ctx){
   var k=akey(l); if(!k) return; var nm=String(l).trim(); adrMarkSeen(pid,nm);
   var vgs={}; discsOf(pid).forEach(function(d){ vgs[d.name]=1; });
-  var hideL=false;
+  var hideL=false, armedDel=null;
+  var canDel=function(){ var r=role(); return r==='beheerder'||r==='projectleider'; };
+  var delBtn=function(id){ if(!canDel()) return ''; return '<button type="button" class="btn" data-adel="'+esc(id)+'" title="Verwijderen" style="min-height:32px;padding:4px 8px;font-size:12px">'+(armedDel===id?'Zeker verwijderen?':'🗑')+'</button>'; };
   var draw=function(){
     adrMarkSeen(pid,nm);
     var L=adrList(pid,nm), roots=L.filter(function(e){return !e.re;});
@@ -784,8 +786,8 @@ function openAdr(pid,l,ctx){
       h+='<div class="aet">'+(e.k==='opm'?'<b>Opmerking'+(e.vg?' voor '+esc(e.vg):'')+':</b> ':'')+esc(e.t||'')+'</div>';
       if(e.k==='foto') h+='<img class="aimg" data-foto="'+esc(e.f)+'" alt="Foto van adres '+esc(nm)+'">';
       h+='<div class="hint" style="margin:2px 0 0">'+esc(whoName(e.by))+' · '+esc(fmtDT(e.at))+(e.ctx?' · '+esc(e.ctx):'')+(e.done&&e.dAt?' · <b style="color:#1F7A4A">✓ afgehandeld door '+esc(whoName(e.dBy))+' '+esc(fmtDT(e.dAt))+'</b>':'')+'</div></div></div>';
-      kids.forEach(function(r){ h+='<div class="aer">'+(r.k==='foto'?'📷 ':'↳ ')+'<b>'+esc(whoName(r.by))+'</b> '+esc(r.t||'')+(r.k==='foto'?'<img class="aimg" data-foto="'+esc(r.f)+'" alt="Foto">':'')+'<span class="hint" style="margin:0"> · '+esc(fmtDT(r.at))+'</span></div>'; });
-      h+='<div class="aea"><input type="text" placeholder="Reageer…" data-arin="'+esc(e.id)+'"><button type="button" class="btn" data-arsend="'+esc(e.id)+'">Reageer</button><label class="btn" style="cursor:pointer">📷<input type="file" accept="image/*" data-arfoto="'+esc(e.id)+'" hidden></label></div>';
+      kids.forEach(function(r){ h+='<div class="aer">'+(r.k==='foto'?'📷 ':'↳ ')+'<b>'+esc(whoName(r.by))+'</b> '+esc(r.t||'')+(r.k==='foto'?'<img class="aimg" data-foto="'+esc(r.f)+'" alt="Foto">':'')+'<span class="hint" style="margin:0"> · '+esc(fmtDT(r.at))+'</span>'+delBtn(r.id)+'</div>'; });
+      h+='<div class="aea"><input type="text" placeholder="Reageer…" data-arin="'+esc(e.id)+'"><button type="button" class="btn" data-arsend="'+esc(e.id)+'">Reageer</button>'+delBtn(e.id)+'<label class="btn" style="cursor:pointer">📷<input type="file" accept="image/*" data-arfoto="'+esc(e.id)+'" hidden></label></div>';
       h+='</div>';
     });
     h+='</div><div class="anew"><textarea id="a_t" rows="2" placeholder="Schrijf een opmerking of bericht over dit adres…"></textarea>';
@@ -804,6 +806,11 @@ function openAdr(pid,l,ctx){
   var md=document.getElementById('modal');
   md.onclick=function(e){ var t=e.target, b;
     if(t.id==='a_tog'){ hideL=!hideL; draw(); return; }
+    if((b=t.closest('[data-adel]'))){ if(!canDel()) return; var did=b.getAttribute('data-adel');
+      if(armedDel!==did){ armedDel=did; draw(); return; }
+      var key=pid+'|'+akey(nm);
+      mut(function(){ if(S.adr&&S.adr[key]) S.adr[key]=S.adr[key].filter(function(x){ return x.id!==did && x.re!==did; }); },'adres-bericht verwijderd');
+      armedDel=null; draw(); toast('Verwijderd'); return; }
     if(t.id==='ov'||t.id==='a_close'){ md.onclick=null; md.onchange=null; closeModal(); render(); return; }
     if(t.id==='a_opm'){ var tx=document.getElementById('a_t').value.trim(); if(!tx){ toast('Schrijf eerst een opmerking.'); document.getElementById('a_t').focus(); return; } add({k:'opm',t:tx,vg:document.getElementById('a_vg').value||undefined,done:false,ctx:ctx&&ctx.taak||undefined}); return; }
     if((b=t.closest('[data-arsend]'))){ var id=b.getAttribute('data-arsend'), inp=document.querySelector('[data-arin="'+id+'"]'); if(!inp||!inp.value.trim()) return; add({k:'msg',t:inp.value.trim(),re:id}); return; }
