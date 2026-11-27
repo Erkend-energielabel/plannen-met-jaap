@@ -273,6 +273,12 @@ body.full header.top,body.full .rule,body.full nav.tabs,body.full #dayinfo,body.
 .blk .hr{position:absolute;left:2px;bottom:1px;font-size:7px;line-height:1;font-weight:600;opacity:.9}
 .blk{-webkit-touch-callout:none}
 .blk.done{font-size:14px;font-weight:700}
+.blk.done{box-shadow:inset 0 0 0 3px #D0021B}
+.blk.done::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(to top right,transparent calc(50% - 2.5px),#D0021B calc(50% - 2.5px),#D0021B calc(50% + 2.5px),transparent calc(50% + 2.5px)),linear-gradient(to bottom right,transparent calc(50% - 2.5px),#D0021B calc(50% - 2.5px),#D0021B calc(50% + 2.5px),transparent calc(50% + 2.5px))}
+.blk.done .ck{display:none}
+.blk.nod.done{border-color:#D0021B!important;box-shadow:none}
+.blk.done .loc,.blk.done .hr{position:relative;z-index:3}
+.blk.done .hr{position:absolute}
 .blk.late{box-shadow:inset 0 0 0 2px var(--bad)}
 .blk.late::before{content:"!";position:absolute;top:-6px;right:-5px;width:13px;height:13px;border-radius:50%;background:var(--bad);color:#fff;font:700 9px/13px var(--body);z-index:3}
 .blk.off{opacity:.4}
@@ -492,7 +498,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 26-11-2026 19:27</p>
+    <p class="lg-ver" id="lgVer">versie 27-11-2026 09:47</p>
   </form>
 </div>
 <style>
@@ -1983,6 +1989,11 @@ function preview(){
   if(g.side==='r') i1=Math.max(i0,i1+g.dd); else i0=Math.min(i1,i0+g.dd);
   gh.style.left=(i0*c)+'px'; gh.style.width=((i1-i0+1)*c)+'px';
 }
+app.addEventListener('contextmenu',function(e){
+  if(V.tab!=='planning') return; var t=e.target, blk=t.closest&&t.closest('.blk'), lab=t.closest&&t.closest('.row.task .lab');
+  if(blk){ var cl=blk.closest('[data-t]'); if(!cl) return; e.preventDefault(); G=null; openPostit(cl.getAttribute('data-t'),blk.getAttribute('data-d'),+blk.getAttribute('data-r')); return; }
+  if(lab){ var rw=lab.closest('[data-row]'); if(!rw) return; e.preventDefault(); openEdit(rw.getAttribute('data-row')); }
+});
 var LP=null;
 function lpCancel(){ if(LP){ clearTimeout(LP.timer); if(LP.el) LP.el.classList.remove('lphold'); LP=null; } }
 app.addEventListener('pointerdown',function(e){
