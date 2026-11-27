@@ -542,7 +542,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 27-11-2026 18:31</p>
+    <p class="lg-ver" id="lgVer">versie 27-11-2026 18:32</p>
   </form>
 </div>
 <style>
@@ -769,6 +769,7 @@ function openAdr(pid,l,ctx){
   var vgs={}; discsOf(pid).forEach(function(d){ vgs[d.name]=1; });
   var hideL=false;
   var draw=function(){
+    adrMarkSeen(pid,nm);
     var L=adrList(pid,nm), roots=L.filter(function(e){return !e.re;});
     var h='<div class="ov" id="ov"><div class="dlg adr" style="width:96vw;max-width:820px"><h2>📒 Adres '+esc(nm)+' · logboek</h2><div class="in adrin">';
     h+='<div style="margin-bottom:8px"><button type="button" class="btn" id="a_tog">'+(hideL?'Opmerkingen tonen ('+roots.length+')':'Opmerkingen verbergen')+'</button></div>';
