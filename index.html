@@ -391,17 +391,19 @@ body[data-role="projectleider"] [data-a="clear"],body[data-role="projectleider"]
 .uitem{flex-wrap:wrap}
 .ucm{flex-basis:100%;display:flex;flex-direction:column;gap:6px;padding:0 10px 10px 10px}
 .ucm .ulog{align-self:flex-start;font-size:13px}
-.ucmi{display:flex;gap:10px;align-items:flex-start;text-align:left;border:2px solid #D9A400;background:#FFF4C2;border-radius:8px;padding:8px 10px;font:600 15px/1.3 var(--body,inherit);color:#111;cursor:pointer}
+.ucmi{display:flex;gap:8px;align-items:flex-start;text-align:left;border:1px solid var(--line2);border-left:3px solid #D9A400;background:transparent;border-radius:6px;padding:6px 8px;font:500 14px/1.3 var(--body,inherit);color:inherit;cursor:pointer}
+.rdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#D32F2F;margin-left:6px;vertical-align:1px}
+.rnew{position:absolute;top:-4px;right:-4px;width:11px;height:11px;border-radius:50%;background:#D32F2F;box-shadow:0 0 0 1.5px #fff;z-index:4}
 .ucb{flex:none;width:26px;height:26px;border:2px solid #111;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;font:900 17px/1 var(--body,inherit);color:#111;cursor:pointer;padding:0}
 .ucb[aria-pressed="true"]{background:#1F7A4A;border-color:#1F7A4A;color:#fff}
 .ucb:disabled{opacity:.4;cursor:not-allowed}
 .uct small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
-.dlg.adr .ae{border:1px solid var(--line2);border-radius:8px;padding:10px;margin:0 0 10px;background:var(--surface)}
-.dlg.adr .ae.open{border:2px solid #D9A400;background:#FFF9E0}
-.dlg.adr .ae.ok{border-color:#1F7A4A;background:#EEF7F1}
+.dlg.adr .ae{border:1px solid var(--line2);border-radius:6px;padding:8px 10px;margin:0 0 8px;background:var(--surface)}
+.dlg.adr .ae.open{border-left:3px solid #D9A400}
+.dlg.adr .ae.ok{border-left:3px solid #1F7A4A;opacity:.75}
 .dlg.adr .ae.ok .aet{text-decoration:line-through}
 .dlg.adr .aeh{display:flex;gap:10px;align-items:flex-start}
-.dlg.adr .aet{font-size:15px;line-height:1.35;white-space:pre-wrap}
+.dlg.adr .aet{font-size:14px;line-height:1.35;white-space:pre-wrap}
 .dlg.adr .aer{margin:6px 0 0 36px;padding:6px 8px;border-left:3px solid var(--line2);font-size:14px}
 .dlg.adr .aea{display:flex;gap:6px;margin:8px 0 0 36px}.dlg.adr .aea input[type=text]{flex:1;min-width:0}
 .dlg.adr .aimg{display:block;max-width:100%;max-height:320px;margin:6px 0 0;border-radius:6px;background:#eee;min-height:40px}
@@ -540,7 +542,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 27-11-2026 13:32</p>
+    <p class="lg-ver" id="lgVer">versie 27-11-2026 15:19</p>
   </form>
 </div>
 <style>
@@ -751,6 +753,9 @@ function chgSig(v){ if(!v||typeof v!=='object') return ''; return [v.h==null?'':
 /* ---------- adresdossier ---------- */
 function akey(l){ return String(l||'').trim().toLowerCase().replace(/\s+/g,' '); }
 function adrList(pid,l){ var k=akey(l); if(!k) return []; return ((S.adr||{})[pid+'|'+k])||[]; }
+function adrSeen(){ try{ return JSON.parse(localStorage.getItem('bouwplanner.adrseen')||'{}'); }catch(e){ return {}; } }
+function adrMarkSeen(pid,l){ var m=adrSeen(); m[pid+'|'+akey(l)]=Date.now(); try{ localStorage.setItem('bouwplanner.adrseen',JSON.stringify(m)); }catch(e){} }
+function adrNew(pid,l){ if(!akey(l)) return 0; var sn=adrSeen()[pid+'|'+akey(l)]; var lo=sn||(Date.now()-7*864e5); return adrList(pid,l).filter(function(e){ return e.at>lo && e.by!==ME.id; }).length; }
 function adrOpen(pid,l,discName){ return adrList(pid,l).filter(function(e){ return e.k==='opm'&&!e.done&&(!e.vg||!discName||e.vg.toLowerCase()===String(discName).toLowerCase()); }); }
 function canTickVg(vg){ var r=role(); if(r==='beheerder'||r==='projectleider') return true; var m=myMember(); if(!m||!m.dnames||!m.dnames.length) return false; return !vg||m.dnames.indexOf(String(vg).trim().toLowerCase())>=0; }
 function adrPush(pid,l,e){ if(!S.adr) S.adr={}; var k=pid+'|'+akey(l); if(!S.adr[k]) S.adr[k]=[]; e.id=e.id||uid(); e.by=ME.id||''; e.at=Date.now(); S.adr[k].push(e); return e; }
@@ -760,7 +765,7 @@ function fotoGet(id,cb){ if(FOTOC[id]){ cb(FOTOC[id]); return; } if(!DBH){ try{ 
 function fotoPut(id,img,meta,cb){ FOTOC[id]=img; if(!DBH){ try{ localStorage.setItem('bouwplanner.foto.'+id,img); }catch(e){} cb(true); return; }
   var o={img:img,t:Date.now()}; for(var k in meta) o[k]=meta[k]; DBH.doc('planner/foto_'+id).set(o).then(function(){ cb(true); }).catch(function(){ cb(false); }); }
 function openAdr(pid,l,ctx){
-  var k=akey(l); if(!k) return; var nm=String(l).trim();
+  var k=akey(l); if(!k) return; var nm=String(l).trim(); adrMarkSeen(pid,nm);
   var vgs={}; discsOf(pid).forEach(function(d){ vgs[d.name]=1; });
   var draw=function(){
     var L=adrList(pid,nm), roots=L.filter(function(e){return !e.re;});
@@ -792,7 +797,7 @@ function openAdr(pid,l,ctx){
   draw();
   var md=document.getElementById('modal');
   md.onclick=function(e){ var t=e.target, b;
-    if(t.id==='ov'||t.id==='a_close'){ md.onclick=null; md.onchange=null; closeModal(); return; }
+    if(t.id==='ov'||t.id==='a_close'){ md.onclick=null; md.onchange=null; closeModal(); render(); return; }
     if(t.id==='a_opm'||t.id==='a_msg'){ var tx=document.getElementById('a_t').value.trim(); if(!tx){ toast('Schrijf eerst een opmerking of bericht.'); document.getElementById('a_t').focus(); return; } add({k:t.id==='a_opm'?'opm':'msg',t:tx,vg:document.getElementById('a_vg').value||undefined,done:false,ctx:ctx&&ctx.taak||undefined}); return; }
     if((b=t.closest('[data-arsend]'))){ var id=b.getAttribute('data-arsend'), inp=document.querySelector('[data-arin="'+id+'"]'); if(!inp||!inp.value.trim()) return; add({k:'msg',t:inp.value.trim(),re:id}); return; }
     if((b=t.closest('[data-atick]'))){ var aid=b.getAttribute('data-atick'), it=adrList(pid,nm).filter(function(x){return x.id===aid;})[0]; if(!it||!canTickVg(it.vg)) return;
@@ -1314,7 +1319,7 @@ function blocksHTML(t){
       var i=idx[ds]; if(i==null) return;
       var nt=(t.days[ds]&&typeof t.days[ds]==='object'&&t.days[ds].o)||'', ns=(t.days[ds]&&typeof t.days[ds]==='object'&&t.days[ds].s)||'', done=isD(t.days[ds]), late=!done&&ds<tdS, off=offFor(t,ds), loc=dLoc(t,ds), hr=dHrs(t,ds), pt=dPart(t,ds);
       var cmo=loc?adrOpen(t.projectId,loc,(disc(t.disc)||{}).name).length:0;
-      var inner=(cmo?'<span class="cmd" title="'+cmo+' open opmerking(en)">'+cmo+'</span>':'')+(ns||nt?'<i class="ob '+(ns||'n')+'"></i>':'')+(loc?'<span class="loc">'+esc(loc)+'</span>':'')+(t.hn?'<span class="hn">'+esc(t.hn)+'</span>':'')+(done?'<span class="ck'+(loc?' lo':'')+'">✓</span>':'')+(c>=22?'<span class="hr">'+hr+'</span>':'');
+      var inner=(cmo?'<span class="cmd" title="'+cmo+' open opmerking(en)">'+cmo+'</span>':'')+(loc&&adrNew(t.projectId,loc)?'<span class="rnew" title="Nieuw bericht bij dit adres"></span>':'')+(ns||nt?'<i class="ob '+(ns||'n')+'"></i>':'')+(loc?'<span class="loc">'+esc(loc)+'</span>':'')+(t.hn?'<span class="hn">'+esc(t.hn)+'</span>':'')+(done?'<span class="ck'+(loc?' lo':'')+'">✓</span>':'')+(c>=22?'<span class="hr">'+hr+'</span>':'');
       h+='<div class="blk'+(loc?' tx'+(String(loc).length>3?' tx2':''):'')+(disc(t.disc)?'':' nod')+(V.rsel.indexOf(t.id+'|'+run[0])>=0?' rsel':'')+(done?' done':'')+(late?' late':'')+(off?' off':'')+(pt?' half':'')+'" data-t="'+t.id+'" data-d="'+ds+'" data-r="'+ri+'" data-dn="'+esc(fullD(P(ds))+' · '+t.name+(pt?(pt==='o'?' · ochtend':' · middag'):'')+' · '+hr+' uur'+(loc?' · '+loc:'')+(nt?' · opm: '+nt:''))+'" style="left:'+(i*c+2+(pt==='m'?c/2:0))+'px;'+(pt?'width:'+(c/2-3)+'px;':'')+'--c:'+esc(col)+'">'+
         (k===0?'<i class="hd l" data-side="l"></i>':'')+inner+(k===run.length-1?'<i class="hd r" data-side="r"></i>':'')+'</div>';
     });
@@ -1506,7 +1511,7 @@ function uItem(t,ds,nr,showDate){
   h+='<button type="button" class="utick" data-utick="'+t.id+'|'+ds+'" aria-pressed="'+done+'" aria-label="'+(done?'Afvinken ongedaan maken':'Afvinken')+'">'+(done?'✓':'')+'</button>';
   h+='<button type="button" class="ubody" data-upost="'+t.id+'|'+ds+'">'+(d?'<span class="udisc">'+esc(d.name)+'</span>':'<span class="udisc">Geen vakgebied</span>')+'<span class="unm">'+(function(){ var c=chgOf(t,ds); return c?'<span class="uchg '+c.k+'">'+(c.k==='nieuw'?'NIEUW':'AANGEPAST')+'</span> ':''; })()+nr+'. '+esc(t.name)+'</span><span class="umeta">'+(showDate?esc(shortD(ds))+' · ':'')+(done&&o.dt?'<b style="color:#111">✓ '+hhmm(o.dt)+(new Date(o.dt).toDateString()!==new Date().toDateString()?' ('+new Date(o.dt).getDate()+'-'+(new Date(o.dt).getMonth()+1)+')':'')+(o.du?' · '+esc(whoName(o.du)):'')+'</b> · ':'')+dHrs(t,ds)+' uur'+(dPart(t,ds)?' · '+(dPart(t,ds)==='o'?'ochtend':'middag'):'')+'</span>'+(o.o?'<span class="unote">'+esc(o.o)+'</span>':'')+(done?'<span class="udone">✓ GEREED</span>':'')+'</button>'+(loc?(function(){ var dn=d?d.name:'', op=adrOpen(t.projectId,loc,dn), na=adrList(t.projectId,loc).length;
     return '<div class="ucm">'+op.map(function(e){ return '<button type="button" class="ucmi" data-uatick="'+esc(t.projectId)+'|'+esc(loc)+'|'+esc(e.id)+'"><span class="ucb"></span><span class="uct">💬 '+esc(e.t)+'<small>'+esc(whoName(e.by))+' · '+esc(fmtDT(e.at))+(e.vg?' · voor '+esc(e.vg):'')+'</small></span></button>'; }).join('')
-      +'<button type="button" class="btn ulog" data-uadr="'+esc(t.projectId)+'|'+esc(loc)+'|'+esc(dn)+'|'+esc(t.name)+'">📒 Logboek adres '+esc(loc)+(na?' ('+na+')':'')+' · reageren of foto</button></div>'; })():'');
+      +'<button type="button" class="btn ulog" data-uadr="'+esc(t.projectId)+'|'+esc(loc)+'|'+esc(dn)+'|'+esc(t.name)+'">📒 Logboek adres '+esc(loc)+(na?' ('+na+')':'')+' · reageren of foto'+(adrNew(t.projectId,loc)?'<span class="rdot" title="Nieuw bericht"></span>':'')+'</button></div>'; })():'');
   if(loc) h+='<span class="uhn" title="Huisnummer / adres"><small>Nr.</small>'+esc(loc)+'</span>';
   if(o.s) h+='<span class="ustk '+esc(o.s)+'">!</span>';
   return h+'</div>';
@@ -1769,7 +1774,7 @@ function openPostit(tid,ds,r){
   var curS=(v&&typeof v==='object'&&v.s)||'';
   h+='<div class="w"><span style="font-size:12px;color:var(--muted)">Sticker (alleen deze dag)</span><div class="seg">'+[['','Geen'],['geel','! Geel'],['rood','! Rood']].map(function(x){return '<button type="button" data-st="'+x[0]+'" aria-pressed="'+(curS===x[0])+'">'+x[1]+'</button>';}).join('')+'</div><input type="hidden" id="p_s" value="'+curS+'"></div>';
   h+='<label class="w">Notitie (alleen deze dag)<textarea id="p_o" rows="2" placeholder="bijv. wacht op levering">'+esc((v&&typeof v==='object'&&v.o)||'')+'</textarea></label>';
-  if(dLoc(t,ds)){ var oa=adrOpen(t.projectId,dLoc(t,ds)).length, na=adrList(t.projectId,dLoc(t,ds)).length; h+='<div class="w"><button type="button" class="btn" id="p_adr" style="width:100%">📒 Logboek adres '+esc(dLoc(t,ds))+' ('+na+(oa?', '+oa+' open':'')+') · opmerking of foto toevoegen</button></div>'; }
+  if(dLoc(t,ds)){ var oa=adrOpen(t.projectId,dLoc(t,ds)).length, na=adrList(t.projectId,dLoc(t,ds)).length; h+='<div class="w"><button type="button" class="btn" id="p_adr" style="width:100%">📒 Logboek adres '+esc(dLoc(t,ds))+' ('+na+(oa?', '+oa+' open':'')+') · opmerking of foto toevoegen'+(adrNew(t.projectId,dLoc(t,ds))?'<span class="rdot" title="Nieuw bericht"></span>':'')+'</button></div>'; }
   h+='<label class="chk w"><input type="checkbox" id="p_d"'+(isD(v)?' checked':'')+(canTick(t)?'':' disabled')+'> Afgevinkt (gereed)'+((v&&typeof v==='object'&&v.d&&v.dt)?' <span class="hint" style="margin:0">om '+hhmm(v.dt)+(v.du?' door '+esc(whoName(v.du)):'')+'</span>':'')+(canTick(t)?'':' <span class="hint" style="margin:0">(niet jouw vakgebied)</span>')+'</label>';
   h+='<label class="w">Toepassen op<select id="p_scope"><option value="day">Alleen deze dag</option><option value="run">Dit hele stuk ('+((runs(t)[r]||[]).length)+' dagen)</option><option value="all">Hele taak ('+tCount(t)+' dagen)</option></select></label>';
   h+='</div><p class="hint">Laat Uren leeg om de standaard van de taak te gebruiken ('+(+t.perDay||0)+' uur).</p><div class="acts"><button class="btn danger" type="button" id="p_del">Dag verwijderen</button><span class="spacer"></span><button class="btn" type="button" id="p_cancel">Annuleer</button><button class="btn save" type="submit">Opslaan</button></div></div></form></div>';
