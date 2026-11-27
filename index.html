@@ -545,7 +545,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 27-11-2026 18:45</p>
+    <p class="lg-ver" id="lgVer">versie 27-11-2026 22:25</p>
   </form>
 </div>
 <style>
@@ -768,9 +768,11 @@ function fotoGet(id,cb){ if(FOTOC[id]){ cb(FOTOC[id]); return; } if(!DBH){ try{ 
 function fotoPut(id,img,meta,cb){ FOTOC[id]=img; if(!DBH){ try{ localStorage.setItem('bouwplanner.foto.'+id,img); }catch(e){} cb(true); return; }
   var o={img:img,t:Date.now()}; for(var k in meta) o[k]=meta[k]; DBH.doc('planner/foto_'+id).set(o).then(function(){ cb(true); }).catch(function(){ cb(false); }); }
 function openAdr(pid,l,ctx){
-  var k=akey(l); if(!k) return; var nm=String(l).trim(); adrMarkSeen(pid,nm);
+  var k=akey(l); if(!k) return; var nm=String(l).trim();
+  var seenLo=adrSeen()[pid+'|'+k]||(Date.now()-7*864e5), lastId=null;
   var vgs={}; discsOf(pid).forEach(function(d){ vgs[d.name]=1; });
   var hideL=false, armedDel=null;
+  var hot=function(e){ return e.id===lastId || (e.at>seenLo && e.by!==ME.id); };
   var canDel=function(){ var r=role(); return r==='beheerder'||r==='projectleider'; };
   var delBtn=function(id){ if(!canDel()) return ''; return '<button type="button" class="btn" data-adel="'+esc(id)+'" title="Verwijderen" style="min-height:32px;padding:4px 8px;font-size:12px">'+(armedDel===id?'Zeker verwijderen?':'🗑')+'</button>'; };
   var draw=function(){
@@ -783,7 +785,7 @@ function openAdr(pid,l,ctx){
       var kids=L.filter(function(x){return x.re===e.id;});
       h+='<div class="ae'+(e.k==='opm'?(e.done?' ok':' open'):'')+'">';
       h+='<div class="aeh">'+(e.k==='opm'?'<button type="button" class="ucb" data-atick="'+esc(e.id)+'" aria-pressed="'+(!!e.done)+'" aria-label="Opmerking afvinken"'+(canTickVg(e.vg)?'':' disabled')+'>'+(e.done?'✓':'')+'</button>':'<span style="font-size:18px">'+(e.k==='foto'?'📷':'💬')+'</span>')+'<div style="flex:1;min-width:0">';
-      h+='<div class="aet">'+(e.k==='opm'?'<b>Opmerking'+(e.vg?' voor '+esc(e.vg):'')+':</b> ':'')+esc(e.t||'')+'</div>';
+      h+='<div class="aet"'+(hot(e)?' style="color:#D32F2F;font-weight:600"':'')+'>'+(e.k==='opm'?'<b>Opmerking'+(e.vg?' voor '+esc(e.vg):'')+':</b> ':'')+esc(e.t||'')+'</div>';
       if(e.k==='foto') h+='<img class="aimg" data-foto="'+esc(e.f)+'" alt="Foto van adres '+esc(nm)+'">';
       h+='<div class="hint" style="margin:2px 0 0">'+esc(whoName(e.by))+' · '+esc(fmtDT(e.at))+(e.ctx?' · '+esc(e.ctx):'')+(e.done&&e.dAt?' · <b style="color:#1F7A4A">✓ afgehandeld door '+esc(whoName(e.dBy))+' '+esc(fmtDT(e.dAt))+'</b>':'')+'</div></div></div>';
       kids.forEach(function(r){ h+='<div class="aer">'+(r.k==='foto'?'📷 ':'↳ ')+'<b>'+esc(whoName(r.by))+'</b> '+esc(r.t||'')+(r.k==='foto'?'<img class="aimg" data-foto="'+esc(r.f)+'" alt="Foto">':'')+'<span class="hint" style="margin:0"> · '+esc(fmtDT(r.at))+'</span>'+delBtn(r.id)+'</div>'; });
@@ -797,7 +799,7 @@ function openAdr(pid,l,ctx){
     document.getElementById('modal').innerHTML=h;
     document.querySelectorAll('#ov img[data-foto]').forEach(function(im){ fotoGet(im.getAttribute('data-foto'),function(d){ if(d){ im.src=d; } else im.alt='Foto niet gevonden'; }); });
   };
-  var add=function(e){ try{ mut(function(){ adrPush(pid,nm,e); },e.k==='foto'?'foto bij adres':'bericht bij adres'); toast(e.k==='opm'?'Opmerking opgeslagen':(e.k==='foto'?'Foto opgeslagen':'Bericht opgeslagen')); }catch(err){ toast('Opslaan mislukt: '+(err&&err.message||err)); } draw(); };
+  var add=function(e){ try{ mut(function(){ adrPush(pid,nm,e); lastId=e.id; },e.k==='foto'?'foto bij adres':'bericht bij adres'); toast(e.k==='opm'?'Opmerking opgeslagen':(e.k==='foto'?'Foto opgeslagen':'Bericht opgeslagen')); }catch(err){ toast('Opslaan mislukt: '+(err&&err.message||err)); } draw(); };
   var foto=function(file,re){ if(!file) return; var st=document.getElementById('a_st'); if(st) st.textContent='Foto wordt verwerkt…';
     shrinkImg(file,function(d){ if(!d){ if(st) st.textContent='Foto kon niet worden gelezen.'; return; } var id=uid()+uid();
       fotoPut(id,d,{pid:pid,adres:nm},function(ok){ if(!ok){ var s2=document.getElementById('a_st'); if(s2) s2.textContent='Foto opslaan mislukt. Probeer opnieuw.'; return; }
