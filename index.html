@@ -542,7 +542,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 27-11-2026 16:47</p>
+    <p class="lg-ver" id="lgVer">versie 27-11-2026 18:28</p>
   </form>
 </div>
 <style>
@@ -783,7 +783,7 @@ function openAdr(pid,l,ctx){
       h+='</div>';
     });
     h+='</div><div class="anew"><textarea id="a_t" rows="2" placeholder="Schrijf een opmerking of bericht over dit adres…"></textarea>';
-    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px"><select id="a_vg" aria-label="Voor welk vakgebied"><option value="">Voor iedereen</option>'+Object.keys(vgs).sort().map(function(v){return '<option value="'+esc(v)+'"'+(ctx&&ctx.vg===v?' selected':'')+'>Voor '+esc(v)+'</option>';}).join('')+'</select>';
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px"><select id="a_vg" aria-label="Voor welk vakgebied"><option value="">Voor iedereen</option>'+Object.keys(vgs).sort().map(function(v){return '<option value="'+esc(v)+'"'+(ctx&&ctx.vg&&String(ctx.vg).trim().toLowerCase()===String(v).trim().toLowerCase()?' selected':'')+'>Voor '+esc(v)+'</option>';}).join('')+'</select>';
     h+='<button type="button" class="btn save" id="a_opm">✔ Opmerking (af te vinken)</button><button type="button" class="btn" id="a_msg">💬 Bericht</button><label class="btn" style="cursor:pointer">📷 Foto<input type="file" accept="image/*" id="a_foto" hidden></label><span id="a_st" class="hint" style="margin:0"></span></div></div>';
     h+='<div class="acts"><span class="spacer"></span><button class="btn" type="button" id="a_close">Sluiten</button></div></div></div>';
     document.getElementById('modal').innerHTML=h;
