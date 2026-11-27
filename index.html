@@ -542,7 +542,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 27-11-2026 18:28</p>
+    <p class="lg-ver" id="lgVer">versie 27-11-2026 18:29</p>
   </form>
 </div>
 <style>
@@ -784,7 +784,7 @@ function openAdr(pid,l,ctx){
     });
     h+='</div><div class="anew"><textarea id="a_t" rows="2" placeholder="Schrijf een opmerking of bericht over dit adres…"></textarea>';
     h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px"><select id="a_vg" aria-label="Voor welk vakgebied"><option value="">Voor iedereen</option>'+Object.keys(vgs).sort().map(function(v){return '<option value="'+esc(v)+'"'+(ctx&&ctx.vg&&String(ctx.vg).trim().toLowerCase()===String(v).trim().toLowerCase()?' selected':'')+'>Voor '+esc(v)+'</option>';}).join('')+'</select>';
-    h+='<button type="button" class="btn save" id="a_opm">✔ Opmerking (af te vinken)</button><button type="button" class="btn" id="a_msg">💬 Bericht</button><label class="btn" style="cursor:pointer">📷 Foto<input type="file" accept="image/*" id="a_foto" hidden></label><span id="a_st" class="hint" style="margin:0"></span></div></div>';
+    h+='<button type="button" class="btn save" id="a_opm">✔ Opmerking (af te vinken)</button><label class="btn" style="cursor:pointer">📷 Foto<input type="file" accept="image/*" id="a_foto" hidden></label><span id="a_st" class="hint" style="margin:0"></span></div></div>';
     h+='<div class="acts"><span class="spacer"></span><button class="btn" type="button" id="a_close">Sluiten</button></div></div></div>';
     document.getElementById('modal').innerHTML=h;
     document.querySelectorAll('#ov img[data-foto]').forEach(function(im){ fotoGet(im.getAttribute('data-foto'),function(d){ if(d){ im.src=d; } else im.alt='Foto niet gevonden'; }); });
@@ -798,7 +798,7 @@ function openAdr(pid,l,ctx){
   var md=document.getElementById('modal');
   md.onclick=function(e){ var t=e.target, b;
     if(t.id==='ov'||t.id==='a_close'){ md.onclick=null; md.onchange=null; closeModal(); render(); return; }
-    if(t.id==='a_opm'||t.id==='a_msg'){ var tx=document.getElementById('a_t').value.trim(); if(!tx){ toast('Schrijf eerst een opmerking of bericht.'); document.getElementById('a_t').focus(); return; } add({k:t.id==='a_opm'?'opm':'msg',t:tx,vg:document.getElementById('a_vg').value||undefined,done:false,ctx:ctx&&ctx.taak||undefined}); return; }
+    if(t.id==='a_opm'){ var tx=document.getElementById('a_t').value.trim(); if(!tx){ toast('Schrijf eerst een opmerking.'); document.getElementById('a_t').focus(); return; } add({k:'opm',t:tx,vg:document.getElementById('a_vg').value||undefined,done:false,ctx:ctx&&ctx.taak||undefined}); return; }
     if((b=t.closest('[data-arsend]'))){ var id=b.getAttribute('data-arsend'), inp=document.querySelector('[data-arin="'+id+'"]'); if(!inp||!inp.value.trim()) return; add({k:'msg',t:inp.value.trim(),re:id}); return; }
     if((b=t.closest('[data-atick]'))){ var aid=b.getAttribute('data-atick'), it=adrList(pid,nm).filter(function(x){return x.id===aid;})[0]; if(!it||!canTickVg(it.vg)) return;
       mut(function(){ it.done=!it.done; if(it.done){ it.dBy=ME.id||''; it.dAt=Date.now(); } else { delete it.dBy; delete it.dAt; } },'opmerking afgevinkt'); draw(); return; }
