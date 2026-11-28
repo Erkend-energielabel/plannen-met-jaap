@@ -420,6 +420,7 @@ body[data-role="projectleider"] [data-a="clear"],body[data-role="projectleider"]
 .row.task .lab{-webkit-touch-callout:none}
 .row.task .lab.lphold{box-shadow:inset 0 0 0 3px #EB6608;transition:box-shadow 1.7s}
 .uitem.nolock .utick{opacity:.35;cursor:not-allowed}
+.unav{display:flex;gap:8px;margin:0 0 10px}.unav .btn{flex:1;min-height:44px;padding:6px 8px;font-size:13px}.unav .btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .uchg{display:inline-block;padding:1px 6px;border-radius:4px;font:800 10px/1.3 var(--body,inherit);letter-spacing:.06em;color:#fff;background:#B42318;margin-left:6px}
 .uchg.aangepast{background:#EB6608}
 .urow{display:flex;align-items:center;flex-wrap:wrap;margin:0 0 2px}
@@ -564,7 +565,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 28-11-2026 16:43</p>
+    <p class="lg-ver" id="lgVer">versie 28-11-2026 16:47</p>
   </form>
 </div>
 <style>
@@ -1519,12 +1520,17 @@ function viewVrij(){
   h+='<div class="card" style="margin-top:14px"><h2>Importeren</h2><p class="hint">Eén regel per periode: begindatum;einddatum;persoon;soort. Bijvoorbeeld 2026-12-21;2027-01-01;Iedereen;Kerstvakantie. Persoon is een naam uit de lijst of Iedereen. Weekenden worden overgeslagen.</p><textarea id="hImp" rows="5" style="width:100%" placeholder="2026-12-21;2027-01-01;Iedereen;Kerstvakantie"></textarea><div class="acts"><button class="btn primary" type="button" data-imp="1">Importeer</button><label class="btn">Kies CSV-bestand<input type="file" id="hFile" accept=".csv,.txt" style="display:none"></label></div>'+(V.impMsg?'<p class="hint">'+esc(V.impMsg)+'</p>':'')+'</div>';
   return h;
 }
-function uDays(){ var a=[], ms=today(); if(isWE(ms)) ms=nextWd(ms); for(var i=0;i<5;i++){ a.push(ms); ms=nextWd(ms); } return a; }
+function uDays(){ var a=[], ms=today(), off=V.uOff||0;
+  if(off){ var wd=new Date(ms).getUTCDay(); ms=ms-((wd+6)%7)*864e5+off*7*864e5; for(var j=0;j<5;j++){ a.push(ms+j*864e5); } return a; }
+  if(isWE(ms)) ms=nextWd(ms); for(var i=0;i<5;i++){ a.push(ms); ms=nextWd(ms); } return a; }
 function runIdx(t,ds){ var r=runs(t); for(var i=0;i<r.length;i++){ if(r[i].indexOf(ds)>=0) return i; } return 0; }
 function viewUitv(){
   var p=curProj(); if(!p) return '<div class="card"><div class="empty">Geen project.</div></div>';
   var D=uDays(), tdS=F(today()), ts=ptasks(p.id), nrOf={}; ts.forEach(function(t,i){nrOf[t.id]=i+1;});
   var h='<div class="ptitle"><select id="pSel" class="ptsel" aria-label="Project">'+VP().map(function(q){return '<option value="'+q.id+'"'+(q.id===p.id?' selected':'')+'>'+esc((q.nr?q.nr+' · ':'')+q.name)+'</option>';}).join('')+'</select><button class="btn" type="button" data-exp="xlsx">📊 Excel</button><button class="btn" type="button" data-undo="1" '+(UNDO.length?'':'disabled')+'>↶ Herstel</button></div>';
+  var off=V.uOff||0, d0=new Date(D[0]), d1=new Date(D[D.length-1]);
+  h+='<div class="unav"><button type="button" class="btn" data-uoff="-1">◀ Vorige week</button><button type="button" class="btn'+(off?'':' on')+'" data-uoff="0">Nu</button><button type="button" class="btn" data-uoff="1">Volgende week ▶</button></div>';
+  if(off) h+='<p class="hint" style="margin:0 0 8px;text-align:center">'+d0.getUTCDate()+' '+MONF[d0.getUTCMonth()]+' t/m '+d1.getUTCDate()+' '+MONF[d1.getUTCMonth()]+'</p>';
   D.forEach(function(ms){
     var ds=F(ms), list=ts.filter(function(t){return ds in t.days;}), hol=holOn(ds,'__none__');
     var done=list.filter(function(t){return isD(t.days[ds]);}).length, hrs=0; list.forEach(function(t){ hrs+=dHrs(t,ds); });
@@ -1536,7 +1542,7 @@ function viewUitv(){
     if(list.length) h+='<div class="ulist">'+list.map(function(t){ return uItem(t,ds,nrOf[t.id]); }).join('')+'</div>';
     h+='</section>';
   });
-  var late=[]; ts.forEach(function(t){ dlist(t).forEach(function(k){ if(k<tdS&&!isD(t.days[k])&&!offFor(t,k)) late.push([t,k]); }); });
+  var late=[]; if(!off) ts.forEach(function(t){ dlist(t).forEach(function(k){ if(k<tdS&&!isD(t.days[k])&&!offFor(t,k)) late.push([t,k]); }); });
   late.sort(function(a,b){return a[1]<b[1]?-1:1;});
   if(late.length){ h+='<section class="uday late"><header class="uday-h"><div><b class="uday-d">Nog niet afgevinkt</b></div><div class="uday-s">'+late.length+' dagen</div></header><div class="ulist">'; late.slice(0,30).forEach(function(x){ h+=uItem(x[0],x[1],nrOf[x[0].id],true); }); h+='</div></section>'; }
   return h;
@@ -2281,6 +2287,7 @@ document.addEventListener('click',function(e){
   if(isUitv()&&t.closest('[data-addt],[data-addph],[data-edit],[data-deltask],[data-delch],[data-bedit],[data-bcopy],[data-bdel],[data-paste]')) return;
   if((el=t.closest('[data-vmode]'))){ var vm=el.getAttribute('data-vmode'); var me0=myMember(); if(!me0) return; mut(function(){ me0.view=vm; }); return; }
   if(t.closest('[data-clearp]')){ if(isUitv()) return; openClear(); return; }
+  if((el=t.closest('[data-uoff]'))){ var uv=+el.getAttribute('data-uoff'); V.uOff=uv?(V.uOff||0)+uv:0; render(); return; }
   if((el=t.closest('[data-uday]'))){ V.uDay=+el.getAttribute('data-uday'); render(); return; }
   if((el=t.closest('[data-utick]'))){ var q=el.getAttribute('data-utick').split('|'), tk=T(q[0]); if(tk&&canProj(tk.projectId)){ if(!canTick(tk)){ toast('Je kunt alleen werk van je eigen vakgebied afvinken.'); return; } mut(function(){ if(q[1] in tk.days) setD(tk,q[1],!isD(tk.days[q[1]])); },'afgevinkt'); } return; }
   if((el=t.closest('[data-upost]'))){ var q2=el.getAttribute('data-upost').split('|'), tk2=T(q2[0]); if(tk2) openPostit(tk2.id,q2[1],runIdx(tk2,q2[1])); return; }
