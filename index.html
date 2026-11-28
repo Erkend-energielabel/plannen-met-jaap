@@ -545,7 +545,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 27-11-2026 22:25</p>
+    <p class="lg-ver" id="lgVer">versie 28-11-2026 08:54</p>
   </form>
 </div>
 <style>
@@ -1612,7 +1612,7 @@ function viewBeheer(){
   S.disciplines.forEach(function(d){ h+='<div class="item"><input type="color" value="'+esc(d.color)+'" data-dk="color" data-did="'+d.id+'" aria-label="Kleur"><input type="text" value="'+esc(d.name)+'" data-dk="name" data-did="'+d.id+'" aria-label="Vakgebied"><input type="text" value="'+esc(kwText(d))+'" data-dkw="1" data-did="'+d.id+'" aria-label="Trefwoorden" placeholder="trefwoorden (komma-gescheiden)" style="flex:2"><button class="btn danger" type="button" data-deld="'+d.id+'">Verwijder</button></div>'; });
   h+='<div class="acts"><button class="btn" type="button" data-a="addd">+ Vakgebied</button></div></div>';
   h+='<div class="card"><h2>Logo en gegevens</h2><div class="acts" style="margin-top:0">'+(S.logo?'<img src="'+S.logo+'" alt="Logo" style="height:40px;max-width:200px;object-fit:contain">':'')+'<label class="btn">'+(S.logo?'Logo wijzigen':'Logo plaatsen')+'<input type="file" id="logoFile" accept="image/*" style="display:none"></label>'+(S.logo?'<button class="btn danger" type="button" data-logodel="1">Logo verwijderen</button>':'')+'</div>';
-  h+='<div class="acts"><button class="btn" type="button" data-exp="csv">Excel (CSV)</button><button class="btn" type="button" data-exp="pdf">PDF</button><button class="btn" type="button" data-exp="html">Printversie (HTML)</button><button class="btn" type="button" data-exp="json">Backup</button><label class="btn">Backup terugzetten<input type="file" id="jsonFile" accept=".json,application/json" style="display:none"></label></div>';
+  h+='<div class="acts"><button class="btn" type="button" data-exp="csv">Excel (CSV)</button><button class="btn" type="button" data-exp="pdf">PDF</button><button class="btn" type="button" data-exp="html">Printversie (HTML)</button><button class="btn" type="button" data-exp="json">Backup</button><label class="btn">Planning uit Excel inlezen<input type="file" id="xlsFile" accept=".xlsx,.xlsm,.xls" style="display:none"></label><label class="btn">Backup terugzetten<input type="file" id="jsonFile" accept=".json,application/json" style="display:none"></label></div>';
   h+='<div class="acts"><button class="btn danger'+(V.armed==='clear'?' armed':'')+'" type="button" data-a="clear">'+(V.armed==='clear'?'Zeker? Alles wissen':'Alles wissen')+'</button><button class="btn" type="button" data-a="demo">Voorbeelddata terugzetten</button></div>';
   h+=(V.logoMsg?'<p class="hint">'+esc(V.logoMsg)+'</p>':'')+(V.expMsg?'<p class="hint">'+esc(V.expMsg)+'</p>':'')+'<p class="hint">De planning wordt automatisch opgeslagen en is op al je apparaten hetzelfde.</p></div>';
   return h;
@@ -1698,6 +1698,51 @@ function openSpeak(){
       renumber(p.id); },'planning ingesproken');
   });
   upd();
+}
+function xlsParse(X,ws){
+  var rows=X.utils.sheet_to_json(ws,{header:1,raw:true,defval:''}), out=[], chap='', s=function(v){ return String(v==null?'':v).replace(/\s+/g,' ').trim(); };
+  rows.forEach(function(r,i){ if(i<8) return; var a=s(r[0]), b=s(r[1]), c=s(r[2]), d=s(r[3]), e=s(r[4]);
+    if(/^\d+$/.test(a)&&b){ out.push({chap:chap,name:b,disc:e,note:[c,d].filter(Boolean).join(' · ')}); return; }
+    if(!a&&!e&&(b||c)){ if(c&&/detail|planning/i.test(b)) chap=c; else if(b&&!c&&!/detail|planning/i.test(b)) chap=b; else if(c) chap=c; }
+  });
+  return out;
+}
+function openXlsImp(X,wb){
+  var p=curProj(); if(!p){ toast('Kies eerst een project.'); return; }
+  var names=wb.SheetNames, def=names.filter(function(n){ return /detail/i.test(n)&&!/\(\d+\)/.test(n); })[0]||names[0];
+  var items=[];
+  var draw=function(sel){
+    items=xlsParse(X,wb.Sheets[sel]);
+    var cur={}, newD={}; discsOf(p.id).forEach(function(d){ cur[d.name.toLowerCase()]=1; });
+    items.forEach(function(x){ if(x.disc&&!cur[x.disc.toLowerCase()]) newD[x.disc]=1; });
+    var groups=[], gi={}; items.forEach(function(x){ var k=x.chap||'(zonder hoofdstuk)'; if(!(k in gi)){ gi[k]=groups.length; groups.push({n:k,l:[]}); } groups[gi[k]].l.push(x); });
+    var h='<div class="ov" id="ov"><div class="dlg" style="max-width:640px"><h2>Planning uit Excel inlezen</h2><div class="in">'+
+      '<div class="f"><label>Tabblad<select id="xl_s">'+names.map(function(n){return '<option'+(n===sel?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select></label></div>'+
+      '<p class="hint">Inlezen in project <b>'+esc(p.name)+'</b>: <b>'+items.length+'</b> activiteiten (zonder datums, die plan je daarna zelf in de planning).'+(Object.keys(newD).length?' Nieuwe vakgebieden: <b>'+esc(Object.keys(newD).join(', '))+'</b>.':'')+'</p>'+
+      '<div style="max-height:44vh;overflow:auto;border:1px solid var(--line2);border-radius:6px;padding:8px">'+
+      (groups.length?groups.map(function(g){ return '<div style="font-weight:700;margin:6px 0 2px">'+esc(g.n)+' ('+g.l.length+')</div>'+g.l.map(function(x){ return '<div style="font-size:13px;padding:1px 0">• '+esc(x.name)+(x.disc?' <span class="hint" style="margin:0">· '+esc(x.disc)+'</span>':'')+(x.note?' <span class="hint" style="margin:0">· '+esc(x.note)+'</span>':'')+'</div>'; }).join(''); }).join(''):'<p class="hint">In dit tabblad zijn geen activiteiten gevonden (verwacht: nummer in kolom A, naam in kolom B).</p>')+
+      '</div><div class="acts"><span class="spacer"></span><button class="btn" type="button" id="xl_c">Annuleren</button><button class="btn save" type="button" id="xl_ok"'+(items.length?'':' disabled')+'>Inlezen</button></div></div></div></div>';
+    document.getElementById('modal').innerHTML=h;
+    document.getElementById('xl_s').addEventListener('change',function(e){ draw(e.target.value); });
+    document.getElementById('xl_c').addEventListener('click',closeModal);
+    document.getElementById('ov').addEventListener('click',function(e){ if(e.target.id==='ov') closeModal(); });
+    document.getElementById('xl_ok').addEventListener('click',function(){
+      closeModal();
+      mut(function(){
+        var mx=-1; S.tasks.forEach(function(t){ if(t.projectId===p.id&&t.ord!=null&&t.ord>mx) mx=t.ord; });
+        var dm={}; discsOf(p.id).forEach(function(d){ dm[d.name.toLowerCase()]=d.id; });
+        var cm={}; S.chapters.filter(function(c){return c.projectId===p.id;}).forEach(function(c){ cm[c.name.trim().toLowerCase()]=c.id; });
+        items.forEach(function(x){
+          var did=''; if(x.disc){ var k=x.disc.toLowerCase(); if(!dm[k]){ var nd={id:uid(),projectId:p.id,name:x.disc,color:PAL[(S.disciplines.length+4)%PAL.length]}; S.disciplines.push(nd); dm[k]=nd.id; } did=dm[k]; }
+          var cid=''; if(x.chap){ var ck=x.chap.toLowerCase(); if(!cm[ck]){ var nc={id:uid(),projectId:p.id,name:x.chap}; S.chapters.push(nc); cm[ck]=nc.id; } cid=cm[ck]; }
+          S.tasks.push({id:uid(),projectId:p.id,chap:cid,name:x.name,personId:'',disc:did,perDay:8,note:x.note||'',days:{},thruHol:false,ms:'',ord:++mx});
+        });
+        renumber(p.id);
+      },'planning uit Excel ingelezen');
+      toast(items.length+' activiteiten ingelezen');
+    });
+  };
+  draw(def);
 }
 function guessDisc(name){ var l=(name||'').toLowerCase(); if(!l) return ''; var hit=''; discsOf(cpid()).some(function(d){ var kws=kwOf(d); if(kws.some(function(k){return l.indexOf(k)>=0;})){ hit=d.id; return true; } return false; }); return hit; }
 function openEdit(id,chapPreset){
@@ -2347,6 +2392,7 @@ document.addEventListener('change',function(e){
     return;
   }
   if(t.id==='logoFile'){ var lf=t.files&&t.files[0]; if(!lf) return; if(lf.size>15000000){ V.logoMsg='Kies een kleinere afbeelding.'; render(); return; } var im=new Image(); im.onload=function(){ var sc=Math.min(1,600/Math.max(im.width,im.height)); var cv=document.createElement('canvas'); cv.width=Math.max(1,Math.round(im.width*sc)); cv.height=Math.max(1,Math.round(im.height*sc)); cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); var url=cv.toDataURL('image/png'); V.logoMsg=''; mut(function(){S.logo=url;}); }; im.onerror=function(){ V.logoMsg='Deze afbeelding kan niet worden gelezen. Kies een JPEG of PNG.'; render(); }; im.src=URL.createObjectURL(lf); return; }
+  if(t.id==='xlsFile'){ var xf=t.files&&t.files[0]; if(!xf) return; var xr=new FileReader(); xr.onload=function(){ loadXlsx().then(function(X){ var wb=X.read(xr.result,{type:'array'}); t.value=''; openXlsImp(X,wb); }).catch(function(){ toast('Excel kon niet worden gelezen (internet nodig).'); }); }; xr.readAsArrayBuffer(xf); return; }
   if(t.id==='jsonFile'){ var jf=t.files&&t.files[0]; if(!jf) return; var jr=new FileReader(); jr.onload=function(){ try{ var o=migrate(JSON.parse(jr.result)); if(o){ snap(); S=o; save(); V.expMsg='Backup teruggezet.'; } else V.expMsg='Dit is geen planningsbackup.'; }catch(err){ V.expMsg='Dit bestand kon niet worden gelezen.'; } render(); }; jr.readAsText(jf); return; }
   if(t.id==='hFile'){ var fr=new FileReader(); fr.onload=function(){ var ta=document.getElementById('hImp'); if(ta) ta.value=fr.result; }; if(t.files&&t.files[0]) fr.readAsText(t.files[0]); return; }
   if(t.getAttribute('data-dkw')!==null){ var dw=t.getAttribute('data-did'); mut(function(){ S.dkw=S.dkw||{}; S.dkw[dw]=t.value.split(',').map(function(x){return x.trim().toLowerCase();}).filter(Boolean); }); return; }
