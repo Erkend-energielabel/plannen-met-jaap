@@ -559,7 +559,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 28-11-2026 09:00</p>
+    <p class="lg-ver" id="lgVer">versie 28-11-2026 09:04</p>
   </form>
 </div>
 <style>
@@ -1274,7 +1274,8 @@ function renderInner(){
   var rc=document.getElementById('rolechip');
   if(ME.owner){ rc.innerHTML='<label class="viewas">Bekijk als <select id="viewAs" aria-label="Bekijk als">'+'<option value="">Beheerder (ik)</option>'+members().map(function(m){ return '<option value="'+esc(m.uid)+'"'+(V.viewAsUid===m.uid?' selected':'')+'>'+esc(ROLEN[m.role]||m.role)+' · '+esc(m.naam||m.note||'lid')+'</option>'; }).join('')+'</select></label>'; }
   else { var mm=myMember(), own=!!mm&&!V.viewAsUid;
-    rc.innerHTML=(rl!=='laden'&&rl!=='geen')?'<span class="rolechip">'+esc(ROLEN[rl]||rl)+'</span>':'';
+    var dtxt=''; if(rl==='uitvoerder'&&mm){ var dl=(mm.dnames||[]).map(function(k){ var d=S.disciplines.filter(function(x){return (x.name||'').trim().toLowerCase()===k;})[0]; return d?d.name:k; }); dtxt=' · '+(dl.length?dl.join(', '):'geen vakgebied ingesteld'); }
+    rc.innerHTML=(rl!=='laden'&&rl!=='geen')?'<span class="rolechip">'+esc(ROLEN[rl]||rl)+esc(dtxt)+'</span>':'';
   }
   if(ME.owner&&V.viewAsUid&&!members().some(function(m){return m.uid===V.viewAsUid;})) V.viewAsUid=null;
   var a=document.getElementById('app'), sx=0, sy=0, g=document.getElementById('grid');
