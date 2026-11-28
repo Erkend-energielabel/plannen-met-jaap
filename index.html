@@ -423,9 +423,23 @@ body[data-role="projectleider"] [data-a="clear"],body[data-role="projectleider"]
 .uhn{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:64px;max-width:40%;padding:2px 8px;margin:4px 6px 4px 0;border-radius:6px;background:#fff;border:2px solid var(--c);color:#111;font:800 24px/1.05 var(--display,inherit);text-align:center;word-break:break-word}
 .uhn small{font:700 10px/1 var(--body,inherit);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 @media (max-width:500px){.uhn{font-size:20px;min-width:54px}}
+.uitem .ubody{padding-right:46px}
+.uitem .uhn{margin-left:8px}
+@media (max-width:600px){
+  .tlist th:nth-child(4),.tlist td:nth-child(4),.tlist th:nth-child(5),.tlist td:nth-child(5),.tlist th:nth-child(6),.tlist td:nth-child(6),.tlist th:nth-child(7),.tlist td:nth-child(7),.tlist th:nth-child(8),.tlist td:nth-child(8),.tlist th:nth-child(9),.tlist td:nth-child(9){display:none}
+  .tlist td,.tlist th{padding:8px 6px}
+  .item{flex-wrap:wrap}
+  .item input[data-dkw]{flex:1 1 100%;order:9}
+  .uday{margin-left:0;margin-right:0}
+}
 .dlg.adr .adrin{max-height:70vh;overflow:auto}
 @media (max-width:700px){
   .ov{padding:0}
+  .dlg{box-sizing:border-box;overflow-x:hidden}
+  .dlg .in,.dlg form{box-sizing:border-box;max-width:100%}
+  .dlg input:not([type=checkbox]):not([type=radio]):not([type=color]),.dlg select,.dlg textarea{max-width:100%;box-sizing:border-box;min-width:0}
+  .dlg .f{grid-template-columns:1fr!important}
+  .dlg .btn{white-space:normal;text-align:center}
   .dlg{border-radius:0;max-width:none!important;width:100%!important;min-height:100%;margin:0}
   .dlg.adr{height:100vh;height:100dvh;display:flex;flex-direction:column}
   .dlg.adr .adrin{flex:1 1 auto;max-height:none!important;min-height:0;overflow:auto;padding:12px}
@@ -545,7 +559,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 28-11-2026 08:54</p>
+    <p class="lg-ver" id="lgVer">versie 28-11-2026 09:00</p>
   </form>
 </div>
 <style>
@@ -1254,6 +1268,7 @@ function render(){
 function renderInner(){
   var RT=tabsFor(), rl=role(); document.body.setAttribute('data-role',rl);
   if(RT.length&&!RT.some(function(x){return x[0]===V.tab;})) V.tab='planning';
+  if(RT.length&&!V.tabInit){ V.tabInit=1; if((rl==='uitvoerder'||window.innerWidth<=700)&&RT.some(function(x){return x[0]==='uitv';})) V.tab='uitv'; }
   if(isUitv()&&['normal','postit'].indexOf(V.mode)<0) V.mode='normal';
   document.getElementById('tabs').innerHTML=RT.map(function(t){return '<button type="button" role="tab" data-tab="'+t[0]+'" aria-selected="'+(V.tab===t[0])+'">'+t[1]+'</button>';}).join('');
   var rc=document.getElementById('rolechip');
@@ -1449,7 +1464,7 @@ function viewLijst(){
   if(V.fProj!=='all'){ var cp=curProj(); V.fProj=cp?cp.id:'all'; }
   var h='<div class="tools"><select id="fProj" aria-label="Project">'+VP().map(function(p){return '<option value="'+p.id+'"'+(V.fProj===p.id?' selected':'')+'>'+esc((p.nr?p.nr+' · ':'')+p.name)+'</option>';}).join('')+'<option value="all"'+(V.fProj==='all'?' selected':'')+'>Alle projecten</option></select>';
   h+='<select id="fStat" aria-label="Status"><option value="all">Alle statussen</option>'+['Gepland','Bezig','Klaar','Te laat'].map(function(s){return '<option'+(V.fStat===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div>';
-  h+='<div class="panel"><table><thead><tr><th class="num">'+(V.fProj!=='all'?'☰ ':'')+'nr.</th><th>Hoofdstuk</th><th>Activiteit</th><th>Project</th><th>Verantwoordelijke</th><th>Start</th><th>Einde</th><th class="num">Dagen</th><th>Voortgang</th><th>Status</th></tr></thead><tbody>';
+  h+='<div class="panel"><table class="tlist"><thead><tr><th class="num">'+(V.fProj!=='all'?'☰ ':'')+'nr.</th><th>Hoofdstuk</th><th>Activiteit</th><th>Project</th><th>Verantwoordelijke</th><th>Start</th><th>Einde</th><th class="num">Dagen</th><th>Voortgang</th><th>Status</th></tr></thead><tbody>';
   var any=false;
   VP().forEach(function(p){ if(V.fProj!=='all'&&V.fProj!==p.id) return; var nrx=0; ptasks(p.id).forEach(function(t){
     nrx++; var st=status(t); if(V.fStat!=='all'&&V.fStat!==st) return; any=true; var w=pers(t.personId), cc=chapOf(t.chap);
