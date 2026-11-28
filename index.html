@@ -559,7 +559,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 28-11-2026 09:04</p>
+    <p class="lg-ver" id="lgVer">versie 28-11-2026 09:06</p>
   </form>
 </div>
 <style>
@@ -1842,6 +1842,7 @@ function openEdit(id,chapPreset){
 }
 function openPostit(tid,ds,r){
   var t=T(tid); if(!t||!(ds in t.days)) return;
+  if(isUitv()&&!canTick(t)){ toast('Je kunt alleen werk van je eigen vakgebied aanpassen.'); return; }
   var locs={}; S.tasks.forEach(function(x){ if(x.projectId!==t.projectId) return; for(var k in x.days){ var l=dLoc(x,k); if(l) locs[l]=1; } });
   var v=t.days[ds], hv=(v&&typeof v==='object'&&v.h!=null&&v.h!=='')?v.h:'';
   var h='<div class="ov" id="ov"><form class="dlg" id="frm" style="max-width:420px"><h2>Dag · '+esc(fullD(P(ds)))+'</h2><div class="in">';
