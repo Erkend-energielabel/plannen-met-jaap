@@ -418,8 +418,9 @@ body[data-role="projectleider"] [data-a="clear"],body[data-role="projectleider"]
 .row.task .lab{-webkit-touch-callout:none}
 .row.task .lab.lphold{box-shadow:inset 0 0 0 3px #EB6608;transition:box-shadow 1.7s}
 .uitem.nolock .utick{opacity:.35;cursor:not-allowed}
-.uchg{display:inline-block;vertical-align:2px;padding:2px 8px;border-radius:4px;font:800 11px/1.3 var(--body,inherit);letter-spacing:.06em;color:#fff;background:#B42318;margin-right:4px}
+.uchg{display:inline-block;padding:1px 6px;border-radius:4px;font:800 10px/1.3 var(--body,inherit);letter-spacing:.06em;color:#fff;background:#B42318;margin-left:6px}
 .uchg.aangepast{background:#EB6608}
+.urow{display:flex;align-items:center;flex-wrap:wrap;margin:0 0 2px}
 .uhn{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:64px;max-width:40%;padding:2px 8px;margin:4px 6px 4px 0;border-radius:6px;background:#fff;border:2px solid var(--c);color:#111;font:800 24px/1.05 var(--display,inherit);text-align:center;word-break:break-word}
 .uhn small{font:700 10px/1 var(--body,inherit);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
 @media (max-width:500px){.uhn{font-size:20px;min-width:54px}}
@@ -559,7 +560,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 28-11-2026 09:06</p>
+    <p class="lg-ver" id="lgVer">versie 28-11-2026 09:07</p>
   </form>
 </div>
 <style>
@@ -846,12 +847,12 @@ function trackChg(pre){
       if(k<lo||k>hi) continue;
       var sig=chgSig(t.days[k]);
       if(!b||!(k in b)) S.chg[t.id+'|'+k]={t:now,k:(b&&lost)?'aangepast':'nieuw',u:ME.id||''};
-      else if(b[k]!==sig){ var ex=S.chg[t.id+'|'+k]; S.chg[t.id+'|'+k]={t:now,k:(ex&&ex.k==='nieuw'&&now-ex.t<7*864e5)?'nieuw':'aangepast',u:ME.id||''}; }
+      else if(b[k]!==sig){ var ex=S.chg[t.id+'|'+k]; S.chg[t.id+'|'+k]={t:now,k:(ex&&ex.k==='nieuw'&&now-ex.t<3*864e5)?'nieuw':'aangepast',u:ME.id||''}; }
     }
   });
   var old=now-14*864e5; for(var key in S.chg){ var e=S.chg[key]; if(e.t<old||key.split('|')[1]<lo) delete S.chg[key]; }
 }
-function chgOf(t,ds){ var e=S.chg&&S.chg[t.id+'|'+ds]; if(!e||Date.now()-e.t>7*864e5||!(ds in t.days)) return null; return e; }
+function chgOf(t,ds){ var e=S.chg&&S.chg[t.id+'|'+ds]; if(!e||Date.now()-e.t>3*864e5||!(ds in t.days)) return null; return e; }
 function mut(fn,lbl){ snap(); var pre=null; try{ pre=daysMap(); }catch(e){} fn(); normAll(); S.demo=false; try{ trackChg(pre); }catch(e){} logAct(lbl); save(); render(); }
 function restoreSnap(j){ var cur=S.access, lg=S.log, o=JSON.parse(j); o.access=cur; o.log=lg; return o; }
 function undo(){ if(!UNDO.length) return; REDO.push(JSON.stringify(S)); S=restoreSnap(UNDO.pop()); save(); render(); }
@@ -1541,7 +1542,7 @@ function uItem(t,ds,nr,showDate){
   var ok=canTick(t);
   var h='<div class="uitem'+(done?' done':'')+(ok?'':' nolock')+(d?'':' nod')+'" style="--c:'+esc(d?col:'#1A1A1A')+'">';
   h+='<button type="button" class="utick" data-utick="'+t.id+'|'+ds+'" aria-pressed="'+done+'" aria-label="'+(done?'Afvinken ongedaan maken':'Afvinken')+'">'+(done?'✓':'')+'</button>';
-  h+='<button type="button" class="ubody" data-upost="'+t.id+'|'+ds+'">'+(d?'<span class="udisc">'+esc(d.name)+'</span>':'<span class="udisc">Geen vakgebied</span>')+'<span class="unm">'+(function(){ var c=chgOf(t,ds); return c?'<span class="uchg '+c.k+'">'+(c.k==='nieuw'?'NIEUW':'AANGEPAST')+'</span> ':''; })()+nr+'. '+esc(t.name)+'</span><span class="umeta">'+(showDate?esc(shortD(ds))+' · ':'')+(done&&o.dt?'<b style="color:#111">✓ '+hhmm(o.dt)+(new Date(o.dt).toDateString()!==new Date().toDateString()?' ('+new Date(o.dt).getDate()+'-'+(new Date(o.dt).getMonth()+1)+')':'')+(o.du?' · '+esc(whoName(o.du)):'')+'</b> · ':'')+dHrs(t,ds)+' uur'+(dPart(t,ds)?' · '+(dPart(t,ds)==='o'?'ochtend':'middag'):'')+'</span>'+(o.o?'<span class="unote">'+esc(o.o)+'</span>':'')+(done?'<span class="udone">✓ GEREED</span>':'')+'</button>'+(loc?(function(){ var dn=d?d.name:'', op=adrOpen(t.projectId,loc,dn), na=adrList(t.projectId,loc).length;
+  h+='<button type="button" class="ubody" data-upost="'+t.id+'|'+ds+'">'+'<span class="urow">'+(d?'<span class="udisc">'+esc(d.name)+'</span>':'<span class="udisc">Geen vakgebied</span>')+(function(){ var c=chgOf(t,ds); return c?'<span class="uchg '+c.k+'">'+(c.k==='nieuw'?'NIEUW':'AANGEPAST')+'</span>':''; })()+'</span><span class="unm">'+nr+'. '+esc(t.name)+'</span><span class="umeta">'+(showDate?esc(shortD(ds))+' · ':'')+(done&&o.dt?'<b style="color:#111">✓ '+hhmm(o.dt)+(new Date(o.dt).toDateString()!==new Date().toDateString()?' ('+new Date(o.dt).getDate()+'-'+(new Date(o.dt).getMonth()+1)+')':'')+(o.du?' · '+esc(whoName(o.du)):'')+'</b> · ':'')+dHrs(t,ds)+' uur'+(dPart(t,ds)?' · '+(dPart(t,ds)==='o'?'ochtend':'middag'):'')+'</span>'+(o.o?'<span class="unote">'+esc(o.o)+'</span>':'')+(done?'<span class="udone">✓ GEREED</span>':'')+'</button>'+(loc?(function(){ var dn=d?d.name:'', op=adrOpen(t.projectId,loc,dn), na=adrList(t.projectId,loc).length;
     return '<div class="ucm" style="padding:0">'
       +'<button type="button" class="ulogi" data-uadr="'+esc(t.projectId)+'|'+esc(loc)+'|'+esc(dn)+'|'+esc(t.name)+'" aria-label="Logboek adres '+esc(loc)+'" title="Logboek adres '+esc(loc)+'">📒'+(na?'<small>'+na+'</small>':'')+(adrNew(t.projectId,loc)?'<span class="rnew"></span>':'')+'</button></div>'; })():'');
   if(loc) h+='<span class="uhn" title="Huisnummer / adres"><small>Nr.</small>'+esc(loc)+'</span>';
