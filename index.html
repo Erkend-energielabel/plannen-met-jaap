@@ -266,7 +266,8 @@ body.full header.top,body.full .rule,body.full nav.tabs,body.full #dayinfo,body.
 .blk.nod,.blk.nod.done,.blk.nod.late{background:transparent!important;border:2px solid var(--ink)!important;color:var(--ink);text-shadow:none}
 .blk .hn{position:absolute;left:1px;right:1px;bottom:3px;font-size:9px;line-height:1;font-weight:800;overflow:hidden;white-space:nowrap;text-align:center}
 .namew{display:flex;gap:6px;align-items:center}.namew input{flex:1;min-width:0}
-.mic{padding:0 10px;font-size:16px;line-height:1}.mic.rec{background:var(--bad);color:#fff;animation:micpulse 1s infinite}
+.mic{padding:0 10px;font-size:16px;line-height:1}
+.micb{align-self:flex-start;margin-top:6px;padding:8px 12px;font-size:13px}.mic.rec{background:var(--bad);color:#fff;animation:micpulse 1s infinite}
 @keyframes micpulse{50%{opacity:.5}}
 .blk .ck{position:absolute;inset:0;line-height:24px;font-size:15px;font-weight:900;text-align:center;color:#111;text-shadow:0 0 2px #fff,0 0 2px #fff}
 .blk .ck.lo{line-height:30px;font-size:11px}
@@ -563,7 +564,7 @@ th{background:#EB6608}
     <button class="lg-btn lg-go" type="submit" id="lgBtn">Inloggen</button>
     <p class="lg-note"><a href="#" id="lgForgot">Wachtwoord vergeten?</a> · Geen inlog? Vraag de beheerder om een account.</p>
     
-    <p class="lg-ver" id="lgVer">versie 28-11-2026 16:41</p>
+    <p class="lg-ver" id="lgVer">versie 28-11-2026 16:43</p>
   </form>
 </div>
 <style>
@@ -810,7 +811,7 @@ function openAdr(pid,l,ctx){
       h+='<div class="aea"><input type="text" placeholder="Reageer…" data-arin="'+esc(e.id)+'"><button type="button" class="btn" data-arsend="'+esc(e.id)+'">Reageer</button>'+delBtn(e.id)+'<label class="btn" style="cursor:pointer">📷<input type="file" accept="image/*" data-arfoto="'+esc(e.id)+'" hidden></label></div>';
       h+='</div>';
     });
-    h+='</div><div class="anew"><textarea id="a_t" rows="2" placeholder="Schrijf een opmerking of bericht over dit adres…"></textarea>';
+    h+='</div><div class="anew"><textarea id="a_t" rows="2" placeholder="Schrijf een opmerking over dit adres…"></textarea><button type="button" class="btn mic micb" data-mic="a_t">🎤 Inspreken</button>';
     h+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px"><select id="a_vg" aria-label="Voor welk vakgebied"><option value="">Voor iedereen</option>'+Object.keys(vgs).sort().map(function(v){return '<option value="'+esc(v)+'"'+(ctx&&ctx.vg&&String(ctx.vg).trim().toLowerCase()===String(v).trim().toLowerCase()?' selected':'')+'>Voor '+esc(v)+'</option>';}).join('')+'</select>';
     h+='<button type="button" class="btn save" id="a_opm">✔ Opmerking (af te vinken)</button><label class="btn" style="cursor:pointer">📷 Foto<input type="file" accept="image/*" id="a_foto" hidden></label><span id="a_st" class="hint" style="margin:0"></span></div></div>';
     h+='<div class="acts"><span class="spacer"></span><button class="btn" type="button" id="a_close">Sluiten</button></div></div></div>';
@@ -1719,6 +1720,17 @@ function openSpeak(){
   });
   upd();
 }
+var MICREC=null;
+function dictate(btn,el){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ toast('Inspreken kan niet in deze browser. Gebruik de microfoon op je toetsenbord.'); el.focus(); return; }
+  if(MICREC){ try{ MICREC.stop(); }catch(e){} MICREC=null; btn.classList.remove('rec'); return; }
+  var rec=new SR(); rec.lang='nl-NL'; rec.interimResults=false; rec.continuous=false; MICREC=rec;
+  var end=function(){ MICREC=null; btn.classList.remove('rec'); };
+  rec.onresult=function(ev){ var tx=''; for(var i=0;i<ev.results.length;i++) tx+=ev.results[i][0].transcript+' '; tx=tx.trim(); if(tx){ var cur=el.value.trim(); el.value=(cur?cur+' ':'')+tx.charAt(0).toUpperCase().slice(0,0)+tx; el.dispatchEvent(new Event('input',{bubbles:true})); } };
+  rec.onend=end; rec.onerror=function(){ end(); toast('Inspreken lukt niet. Gebruik de microfoon op je toetsenbord.'); };
+  try{ rec.start(); btn.classList.add('rec'); toast('Praat maar…'); }catch(e){ end(); }
+}
 function xlsParse(X,ws){
   var rows=X.utils.sheet_to_json(ws,{header:1,raw:true,defval:''}), out=[], chap='', s=function(v){ return String(v==null?'':v).replace(/\s+/g,' ').trim(); };
   rows.forEach(function(r,i){ if(i<8) return; var a=s(r[0]), b=s(r[1]), c=s(r[2]), d=s(r[3]), e=s(r[4]);
@@ -1784,7 +1796,7 @@ function openEdit(id,chapPreset){
   h+='<label>Uren per dag<input type="number" id="e_pd" min="0" max="16" step="0.5" value="'+(+o.perDay||0)+'"></label>';
   var parts={}; for(var pk in (o.days||{})){ parts[dPart(o,pk)]=1; } var pkeys=Object.keys(parts), pcur=pkeys.length===1?pkeys[0]:(pkeys.length?'-':'');
   h+='<label>Mijlpaal ◆<input type="date" id="e_ms" value="'+esc(o.ms||'')+'"></label><label>Deel van de dag<select id="e_part">'+(pcur==='-'?'<option value="-" selected>Per dag verschillend</option>':'')+'<option value=""'+(pcur===''?' selected':'')+'>Hele dagen</option><option value="o"'+(pcur==='o'?' selected':'')+'>Ochtend</option><option value="m"'+(pcur==='m'?' selected':'')+'>Middag</option></select></label>';
-  h+='<label class="w">Notitie<textarea id="e_note">'+esc(o.note||'')+'</textarea></label></div>';
+  h+='<label class="w">Notitie<textarea id="e_note">'+esc(o.note||'')+'</textarea><button type="button" class="btn mic micb" data-mic="e_note">🎤 Inspreken</button></label></div>';
   if(t) h+='<div class="info"><span>Stickers: <b>'+tDone(t)+'/'+tCount(t)+' ('+tProg(t)+'%)</b></span><span>Uren: <b>'+tHours(t)+'</b></span><span>Status: <b>'+status(t)+'</b></span></div>';
   if(t&&runs(t).length>1) h+='<p class="hint">Deze taak bestaat uit '+runs(t).length+' losse stukken. Pas je begin of duur aan, dan wordt het één aaneengesloten stuk.</p>';
   h+='<p class="hint" id="e_err" style="color:var(--bad)"></p><div class="acts">';
@@ -1855,7 +1867,7 @@ function openPostit(tid,ds,r){
   h+='<label>Uren deze dag<input type="number" id="p_h" min="0" max="24" step="0.5" value="'+esc(hv)+'" placeholder="'+(+t.perDay||0)+' (standaard)"></label><label>Deel van de dag<select id="p_p"><option value="">Hele dag</option><option value="o"'+(dPart(t,ds)==='o'?' selected':'')+'>Ochtend</option><option value="m"'+(dPart(t,ds)==='m'?' selected':'')+'>Middag</option></select></label>';
   var curS=(v&&typeof v==='object'&&v.s)||'';
   h+='<div class="w"><span style="font-size:12px;color:var(--muted)">Sticker (alleen deze dag)</span><div class="seg">'+[['','Geen'],['geel','! Geel'],['rood','! Rood']].map(function(x){return '<button type="button" data-st="'+x[0]+'" aria-pressed="'+(curS===x[0])+'">'+x[1]+'</button>';}).join('')+'</div><input type="hidden" id="p_s" value="'+curS+'"></div>';
-  h+='<label class="w">Notitie (alleen deze dag)<textarea id="p_o" rows="2" placeholder="bijv. wacht op levering">'+esc((v&&typeof v==='object'&&v.o)||'')+'</textarea></label>';
+  h+='<label class="w">Notitie (alleen deze dag)<textarea id="p_o" rows="2" placeholder="bijv. wacht op levering">'+esc((v&&typeof v==='object'&&v.o)||'')+'</textarea><button type="button" class="btn mic micb" data-mic="p_o">🎤 Inspreken</button></label>';
   if(dLoc(t,ds)){ var oa=adrOpen(t.projectId,dLoc(t,ds)).length, na=adrList(t.projectId,dLoc(t,ds)).length; h+='<div class="w"><button type="button" class="btn" id="p_adr" style="width:100%">📒 Logboek adres '+esc(dLoc(t,ds))+' ('+na+(oa?', '+oa+' open':'')+') · opmerking of foto toevoegen'+(adrNew(t.projectId,dLoc(t,ds))?'<span class="rdot" title="Nieuw bericht"></span>':'')+'</button></div>'; }
   h+='<label class="chk w"><input type="checkbox" id="p_d"'+(isD(v)?' checked':'')+(canTick(t)?'':' disabled')+'> Afgevinkt (gereed)'+((v&&typeof v==='object'&&v.d&&v.dt)?' <span class="hint" style="margin:0">om '+hhmm(v.dt)+(v.du?' door '+esc(whoName(v.du)):'')+'</span>':'')+(canTick(t)?'':' <span class="hint" style="margin:0">(niet jouw vakgebied)</span>')+'</label>';
   h+='<label class="w">Toepassen op<select id="p_scope"><option value="day">Alleen deze dag</option><option value="run">Dit hele stuk ('+((runs(t)[r]||[]).length)+' dagen)</option><option value="all">Hele taak ('+tCount(t)+' dagen)</option></select></label>';
@@ -2263,6 +2275,7 @@ app.addEventListener('pointercancel',function(){
 document.addEventListener('click',function(e){
   var t=e.target, el, a;
   if(!t.closest) return;
+  if((el=t.closest('[data-mic]'))){ e.preventDefault(); var mt=document.getElementById(el.getAttribute('data-mic')); if(mt) dictate(el,mt); return; }
   if(t.closest('#modal')) return;
   if(t.closest('.nrin,.stin,.grip')) return;
   if(isUitv()&&t.closest('[data-addt],[data-addph],[data-edit],[data-deltask],[data-delch],[data-bedit],[data-bcopy],[data-bdel],[data-paste]')) return;
